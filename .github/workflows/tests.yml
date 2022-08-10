@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.image
-          key: ${{ matrix.python-version }}-${{ hashFiles('requirements*.txt') }}
+          key: ${{ matrix.python-version }}-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('docker/Dockerfile.test') }}
 
       - name: lowercase repo owner name
         id: repo-owner
@@ -62,6 +62,7 @@ jobs:
           file: docker/Dockerfile.test
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: python_version=${{ matrix.python-version }}
   tests:
     name: Tests
     needs: image
