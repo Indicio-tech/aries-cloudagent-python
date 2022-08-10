@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, 3.10]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v3
@@ -51,6 +51,7 @@ jobs:
         with:
           push: true
           context: .
+          file: docker/Dockerfile.test
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
   tests:
@@ -60,7 +61,7 @@ jobs:
     container: ghcr.io/${{ github.repository_owner }}/acapy-test:py${{ matrix.python-version }}
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v3
