@@ -10,6 +10,9 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
 
+    outputs:
+      repo-owner: ${{ steps.repo-owner.outputs.owner-lc }}
+
     steps:
       - uses: actions/checkout@v3
 
@@ -21,8 +24,9 @@ jobs:
           key: ${{ matrix.python-version }}-${{ hashFiles('requirements*.txt') }}
 
       - name: lowercase repo owner name
+        id: repo-owner
         run: |
-          echo "OWNER=${GITHUB_REPOSITORY_OWNER}" >> ${GITHUB_ENV}
+          echo "::set-output name=owner-lc::${GITHUB_REPOSITORY_OWNER,,}"
 
       - name: Setup Image Metadata
         if: steps.image-built.outputs.cache-hit != 'true'
@@ -62,7 +66,7 @@ jobs:
     name: Tests
     needs: image
     runs-on: ubuntu-latest
-    container: ghcr.io/${{ env.OWNER }}/acapy-test:py${{ matrix.python-version }}
+    container: ghcr.io/${{ needs.image.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
