@@ -19,15 +19,6 @@ jobs:
       indy-version: ${{ steps.indy-version.outputs.indy-version }}
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Build needed
-        id: build-needed
-        uses: actions/cache@v2
-        with:
-          path: ~/.image
-          key: ${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('.github/workflows/tests.yml', 'requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
-
       - name: lowercase repo owner name
         id: repo-owner
         run: |
@@ -38,6 +29,20 @@ jobs:
         run: |
           echo "::set-output name=indy-version::${{env.INDY_VERSION}}"
 
+      - uses: actions/checkout@v3
+
+      - name: Try pulling images
+        run: |
+          docker pull ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/indy-python:py${{ matrix.python-version }}-${{ steps.indy-version.outputs.indy-version }}
+          docker pull ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/acapy-test:py${{ matrix.python-version }}-${{ steps.indy-version.outputs.indy-version }}
+
+      - name: Build needed
+        id: build-needed
+        uses: actions/cache@v2
+        with:
+          path: ~/.image
+          key: ${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('.github/workflows/tests.yml', 'requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+
       - name: Setup Base Image Metadata
         if: steps.build-needed.outputs.cache-hit != 'true'
         id: base-meta
@@ -45,7 +50,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            ghcr.io/${{ github.repository_owner }}/indy-python
+            ghcr.io/${{ steps.repo-owner.outputs.ownser-lc }}/indy-python
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
@@ -57,7 +62,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            ghcr.io/${{ steps.repo-owner.owner-lc }}/acapy-test
+            ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/acapy-test
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
