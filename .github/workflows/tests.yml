@@ -16,6 +16,7 @@ jobs:
 
     outputs:
       repo-owner: ${{ steps.repo-owner.outputs.owner-lc }}
+      indy-version: ${{ steps.indy-version.outputs.indy-version }}
 
     steps:
       - uses: actions/checkout@v3
@@ -31,6 +32,11 @@ jobs:
         id: repo-owner
         run: |
           echo "::set-output name=owner-lc::${GITHUB_REPOSITORY_OWNER,,}"
+
+      - name: indy version
+        id: indy-version
+        run: |
+          echo "::set-output name=indy-version::${{env.INDY_VERSION}}"
 
       - name: Setup Base Image Metadata
         if: steps.build-needed.outputs.cache-hit != 'true'
@@ -102,7 +108,7 @@ jobs:
     name: Tests
     needs: image
     runs-on: ubuntu-latest
-    container: ghcr.io/${{ needs.image.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
+    container: ghcr.io/${{ needs.image.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ needs.image.outputs.indy-version }}
     strategy:
       fail-fast: false
       matrix:
