@@ -43,7 +43,6 @@ jobs:
       - name: Try pulling images
         run: |
           docker pull ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/indy-python:py${{ matrix.python-version }}-${{ steps.indy-version.outputs.indy-version }}
-          docker pull ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/acapy-test:py${{ matrix.python-version }}-${{ steps.indy-version.outputs.indy-version }}
 
       - name: Build needed
         id: build-needed
