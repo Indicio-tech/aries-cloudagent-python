@@ -133,19 +133,7 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
-      - name: list dir
-        run: |
-          pwd
-          which python
-          which pytest
-          ls -al
-
       - uses: actions/checkout@v3
-
       - name: Run pytest
         run: |
-          pwd
-          which python
-          which pytest
-          ls -al
           pytest
