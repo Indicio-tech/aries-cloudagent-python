@@ -38,30 +38,6 @@ jobs:
           path: ~/.image
           key: ${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('.github/workflows/tests.yml', 'requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
 
-      - name: Setup Base Image Metadata
-        if: steps.build-needed.outputs.cache-hit != 'true'
-        id: base-meta
-        uses: docker/metadata-action@v3
-        with:
-          # list of Docker images to use as base name for tags
-          images: |
-            ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/indy-python
-          # generate Docker tags based on the following events/attributes
-          tags: |
-            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
-
-      - name: Setup Test Image Metadata
-        if: steps.build-needed.outputs.cache-hit != 'true'
-        id: test-meta
-        uses: docker/metadata-action@v3
-        with:
-          # list of Docker images to use as base name for tags
-          images: |
-            ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/acapy-test
-          # generate Docker tags based on the following events/attributes
-          tags: |
-            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
-
       - name: Set up Docker Buildx
         if: steps.build-needed.outputs.cache-hit != 'true'
         uses: docker/setup-buildx-action@v1
@@ -73,6 +49,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Base Image Metadata
+        if: steps.build-needed.outputs.cache-hit != 'true'
+        id: base-meta
+        uses: docker/metadata-action@v3
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/indy-python
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
 
       - name: Build and Push Base Image to ghcr.io
         if: steps.build-needed.outputs.cache-hit != 'true'
@@ -89,6 +77,18 @@ jobs:
             indy_sdk_url=https://codeload.github.com/hyperledger/indy-sdk/tar.gz/refs/tags/v${{ env.INDY_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Setup Test Image Metadata
+        if: steps.build-needed.outputs.cache-hit != 'true'
+        id: test-meta
+        uses: docker/metadata-action@v3
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/acapy-test
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
 
       - name: Build and Push Test Image to ghcr.io
         if: steps.build-needed.outputs.cache-hit != 'true'

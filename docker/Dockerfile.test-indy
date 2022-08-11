@@ -13,7 +13,7 @@ RUN mkdir -p test-reports && chown -R indy:indy test-reports && chmod -R ug+rw t
 
 ADD requirements*.txt ./
 
-RUN pip3 install --no-cache-dir \
+RUN pip3 install --user --no-cache-dir \
 	-r requirements.txt \
 	-r requirements.askar.txt \
 	-r requirements.bbs.txt \
