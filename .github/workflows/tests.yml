@@ -74,7 +74,7 @@ jobs:
         if: steps.build-needed.outputs.cache-hit != 'true'
         uses: docker/setup-buildx-action@v1
 
-      - name: Build and Push to Docker ghcr.io
+      - name: Build and Push Base Image to ghcr.io
         if: steps.build-needed.outputs.cache-hit != 'true'
         uses: docker/build-push-action@v3
         with:
@@ -90,7 +90,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and Push to Docker ghcr.io
+      - name: Build and Push Test Image to ghcr.io
         if: steps.build-needed.outputs.cache-hit != 'true'
         uses: docker/build-push-action@v3
         with:
