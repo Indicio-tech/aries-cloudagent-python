@@ -8,6 +8,7 @@ env:
 jobs:
   info:
     name: Gather image info
+    runs-on: ubuntu-latest
     outputs:
       repo-owner: ${{ steps.repo-owner.outputs.owner-lc }}
       indy-version: ${{ steps.indy-version.outputs.indy-version }}
