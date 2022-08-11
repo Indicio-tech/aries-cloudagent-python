@@ -10,7 +10,7 @@ jobs:
     name: Publish test image
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
 
@@ -30,6 +30,15 @@ jobs:
           echo "::set-output name=indy-version::${{env.INDY_VERSION}}"
 
       - uses: actions/checkout@v3
+
+      - name: Log in to the GitHub Container Registry
+        if: steps.build-needed.outputs.cache-hit != 'true'
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: Try pulling images
         run: |
@@ -66,14 +75,6 @@ jobs:
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
-
-      - name: Log in to the GitHub Container Registry
-        if: steps.build-needed.outputs.cache-hit != 'true'
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         if: steps.build-needed.outputs.cache-hit != 'true'
