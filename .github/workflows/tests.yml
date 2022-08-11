@@ -58,7 +58,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            ghcr.io/${{ steps.repo-owner.outputs.ownser-lc }}/indy-python
+            ghcr.io/${{ steps.repo-owner.outputs.owner-lc }}/indy-python
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
