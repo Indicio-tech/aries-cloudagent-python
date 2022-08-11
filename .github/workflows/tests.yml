@@ -101,7 +101,7 @@ jobs:
 
   test-image:
     name: Publish test image
-    needs: info
+    needs: ["info", "base-image"]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
