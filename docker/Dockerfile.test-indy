@@ -13,12 +13,14 @@ RUN mkdir -p test-reports && chown -R indy:indy test-reports && chmod -R ug+rw t
 
 ADD requirements*.txt ./
 
-RUN pip3 install --user --no-cache-dir \
+USER root
+RUN pip3 install --no-cache-dir \
 	-r requirements.txt \
 	-r requirements.askar.txt \
 	-r requirements.bbs.txt \
 	-r requirements.dev.txt
 
 ADD --chown=indy:root . .
+USER indy
 
 ENTRYPOINT ["/bin/bash", "-c", "pytest \"$@\"", "--"]
