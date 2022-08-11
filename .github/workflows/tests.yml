@@ -4,6 +4,7 @@ on:
 
 env:
   INDY_VERSION: 1.16.0
+  INDY_SDK_URL: https://codeload.github.com/hyperledger/indy-sdk/tar.gz/refs/tags/v${{ env.INDY_VERSION }}
 
 jobs:
   image:
@@ -26,7 +27,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.image
-          key: ${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+          key: ${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('.github/workflows/tests.yml', 'requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
 
       - name: lowercase repo owner name
         id: repo-owner
@@ -86,6 +87,7 @@ jobs:
           build-args: |
             python_version=${{ matrix.python-version }}
             indy_version=${{ env.INDY_VERSION }}
+            indy_sdk_url=${{ env.INDY_SDK_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
