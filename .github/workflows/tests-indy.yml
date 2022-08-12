@@ -47,7 +47,7 @@ jobs:
         id: image-exists
         uses: dbluhm/image-tag-exists@27e6d1ac20b4553b5f7bcc6b9b44ab1710843cc7
         with:
-          tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ 'requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+          tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
@@ -73,7 +73,7 @@ jobs:
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
-            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ 'requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
 
       - name: Build and Push Base Image to ghcr.io
         if: steps.image-exists.outputs.exists != 'true'
@@ -125,7 +125,7 @@ jobs:
         id: image-exists
         uses: dbluhm/image-tag-exists@27e6d1ac20b4553b5f7bcc6b9b44ab1710843cc7
         with:
-          tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ 'requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+          tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
@@ -151,7 +151,7 @@ jobs:
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
-            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ 'requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
 
       - name: Build and Push Test Image to ghcr.io
         if: steps.image-exists.outputs.exists != 'true'
