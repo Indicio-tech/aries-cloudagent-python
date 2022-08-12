@@ -2,6 +2,7 @@ name: Nightly Build
 on:
   schedule:
     - cron: '0 0 * * *'
+  workflow_dispatch:
 
 env:
   NAME: aries-cloudagent-python
