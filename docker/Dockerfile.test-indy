@@ -1,7 +1,7 @@
 ARG python_version=3.6.13
 ARG indy_version=1.16.0
-ARG org=hyperledger
-FROM ghcr.io/${org}/indy-python:py${python_version}-${indy_version}
+ARG base_image=ghcr.io/hyperledger/indy-python:py${python_version}-${indy_version}
+FROM ${base_image}
 
 USER indy
 

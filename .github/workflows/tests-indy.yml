@@ -10,18 +10,21 @@ jobs:
     name: Gather image info
     runs-on: ubuntu-latest
     outputs:
-      repo-owner: ${{ steps.repo-owner.outputs.owner-lc }}
-      indy-version: ${{ steps.indy-version.outputs.indy-version }}
+      repo-owner: ${{ steps.info.outputs.owner-lc }}
+      indy-version: ${{ steps.info.outputs.indy-version }}
+      indy-sdk-url: ${{ steps.info.outputs.indy-sdk-url }}
+      base-dep-hash: ${{ steps.info.outputs.base-hash }}
+      test-dep-hash: ${{ steps.info.outputs.test-hash }}
     steps:
-      - name: lowercase repo owner name
-        id: repo-owner
+      - uses: actions/checkout@v3
+      - name: Gather image info
+        id: info
         run: |
           echo "::set-output name=owner-lc::${GITHUB_REPOSITORY_OWNER,,}"
-
-      - name: indy version
-        id: indy-version
-        run: |
           echo "::set-output name=indy-version::${{env.INDY_VERSION}}"
+          echo "::set-output name=indy-sdk-url::https://codeload.github.com/hyperledger/indy-sdk/tar.gz/refs/tags/v${{ env.INDY_VERSION }}"
+          echo "::set-output name=base-hash::${{ hashFiles('docker/Dockerfile.indy-base') }}"
+          echo "::set-output name=test-hash::${{ hashFiles('requirements*.txt', 'docker/Dockerfile.test-indy') }}"
 
   base-image:
     name: Publish base image
@@ -33,14 +36,15 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
-      - uses: actions/checkout@v3
-
       - name: Check image exists
         id: image-exists
         uses: dbluhm/image-tag-exists@cbe218c3a684daf56220fb6398f4e4ccfabff66f
         with:
-          tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+          tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python-test:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ needs.info.outputs.base-dep-hash }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v3
+        if: steps.image-exists.outputs.exists != 'true'
 
       - name: Cache Docker layers
         if: steps.image-exists.outputs.exists != 'true'
@@ -50,7 +54,6 @@ jobs:
           key: ${{ runner.os }}-buildx-base-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-base-
-
 
       - name: Set up Docker Buildx
         if: steps.image-exists.outputs.exists != 'true'
@@ -70,10 +73,9 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: |
-            ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python
+            ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python-test
           tags: |
-            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
-            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ needs.info.outputs.base-dep-hash }}
 
       - name: Build and Push Base Image to ghcr.io
         if: steps.image-exists.outputs.exists != 'true'
@@ -87,7 +89,7 @@ jobs:
           build-args: |
             python_version=${{ matrix.python-version }}
             indy_version=${{ needs.info.outputs.indy_version }}
-            indy_sdk_url=https://codeload.github.com/hyperledger/indy-sdk/tar.gz/refs/tags/v${{ env.INDY_VERSION }}
+            indy_sdk_url=${{ needs.info.outputs.indy-sdk-url }}
           cache-from: type=local,src=/tmp/.buildx-cache-base
           cache-to: type=local,dest=/tmp/.buildx-cache-base-new,mode=max
 
@@ -111,14 +113,16 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
-      - uses: actions/checkout@v3
 
       - name: Check image exists
         id: image-exists
         uses: dbluhm/image-tag-exists@cbe218c3a684daf56220fb6398f4e4ccfabff66f
         with:
-          tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+          tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ needs.info.outputs.indy-version }}-${{ needs.info.outputs.test-dep-hash }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v3
+        if: steps.image-exists.outputs.exists != 'true'
 
       - name: Cache Docker layers
         if: steps.image-exists.outputs.exists != 'true'
@@ -149,8 +153,7 @@ jobs:
           images: |
             ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test
           tags: |
-            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
-            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
+            type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ needs.info.outputs.test-dep-hash }}
 
       - name: Build and Push Test Image to ghcr.io
         if: steps.image-exists.outputs.exists != 'true'
@@ -162,9 +165,7 @@ jobs:
           tags: ${{ steps.test-meta.outputs.tags }}
           labels: ${{ steps.test-meta.outputs.labels }}
           build-args: |
-            python_version=${{ matrix.python-version }}
-            indy_version=${{ env.INDY_VERSION }}
-            org=${{ needs.info.outputs.repo-owner }}
+            base_image=ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python-test:py${{ matrix.python-version }}-${{ needs.info.outputs.indy-version }}-${{ needs.info.outputs.base-dep-hash }}
           cache-from: type=local,src=/tmp/.buildx-cache-test
           cache-to: type=local,dest=/tmp/.buildx-cache-test-new,mode=max
 
@@ -184,7 +185,7 @@ jobs:
       - base-image
       - test-image
     runs-on: ubuntu-latest
-    container: ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ needs.info.outputs.indy-version }}
+    container: ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ needs.info.outputs.indy-version }}-${{ needs.info.outputs.test-dep-hash }}
     strategy:
       fail-fast: false
       matrix:
