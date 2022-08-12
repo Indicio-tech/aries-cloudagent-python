@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: Check image exists
         id: image-exists
-        uses: dbluhm/image-tag-exists@cbe218c3a684daf56220fb6398f4e4ccfabff66f
+        uses: dbluhm/image-tag-exists@c6989f52df3c4c4beca36046db6f48102776e601
         with:
           tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python-test:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ needs.info.outputs.base-dep-hash }}
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -116,7 +116,7 @@ jobs:
 
       - name: Check image exists
         id: image-exists
-        uses: dbluhm/image-tag-exists@cbe218c3a684daf56220fb6398f4e4ccfabff66f
+        uses: dbluhm/image-tag-exists@c6989f52df3c4c4beca36046db6f48102776e601
         with:
           tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ needs.info.outputs.indy-version }}-${{ needs.info.outputs.test-dep-hash }}
           token: ${{ secrets.GITHUB_TOKEN }}
