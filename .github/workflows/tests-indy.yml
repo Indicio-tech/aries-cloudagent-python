@@ -43,6 +43,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache Docker layers
+        if: steps.image-exists.outputs.exists != 'true'
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache-base
@@ -120,6 +121,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache Docker layers
+        if: steps.image-exists.outputs.exists != 'true'
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache-test
