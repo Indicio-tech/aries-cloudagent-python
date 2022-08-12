@@ -67,10 +67,8 @@ jobs:
         id: base-meta
         uses: docker/metadata-action@v3
         with:
-          # list of Docker images to use as base name for tags
           images: |
             ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python
-          # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
@@ -145,10 +143,8 @@ jobs:
         id: test-meta
         uses: docker/metadata-action@v3
         with:
-          # list of Docker images to use as base name for tags
           images: |
             ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test
-          # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}
             type=raw,value=py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
