@@ -45,7 +45,7 @@ jobs:
 
       - name: Check image exists
         id: image-exists
-        uses: dbluhm/image-tag-exists@27e6d1ac20b4553b5f7bcc6b9b44ab1710843cc7
+        uses: dbluhm/image-tag-exists@cbe218c3a684daf56220fb6398f4e4ccfabff66f
         with:
           tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/indy-python:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -123,7 +123,7 @@ jobs:
 
       - name: Check image exists
         id: image-exists
-        uses: dbluhm/image-tag-exists@27e6d1ac20b4553b5f7bcc6b9b44ab1710843cc7
+        uses: dbluhm/image-tag-exists@cbe218c3a684daf56220fb6398f4e4ccfabff66f
         with:
           tag: ghcr.io/${{ needs.info.outputs.repo-owner }}/acapy-test:py${{ matrix.python-version }}-${{ env.INDY_VERSION }}-${{ hashFiles('requirements*.txt', 'docker/Dockerfile.indy-base', 'docker/Dockerfile.test-indy') }}
           token: ${{ secrets.GITHUB_TOKEN }}
