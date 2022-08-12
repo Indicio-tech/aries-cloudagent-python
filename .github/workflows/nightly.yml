@@ -8,21 +8,6 @@ env:
   PYTHON_VERSION: 3.7
 
 jobs:
-    name: Gather image info
-    runs-on: ubuntu-latest
-    outputs:
-      repo-owner: ${{ steps.info.outputs.owner-lc }}
-      indy-version: ${{ steps.info.outputs.indy-version }}
-      indy-sdk-url: ${{ steps.info.outputs.indy-sdk-url }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Gather image info
-        id: info
-        run: |
-          echo "::set-output name=owner-lc::${GITHUB_REPOSITORY_OWNER,,}"
-          echo "::set-output name=indy-version::${{env.INDY_VERSION}}"
-          echo "::set-output name=indy-sdk-url::https://codeload.github.com/hyperledger/indy-sdk/tar.gz/refs/tags/v${{ env.INDY_VERSION }}"
-
   nightly:
     name: Nightly
     runs-on: ubuntu-latest
