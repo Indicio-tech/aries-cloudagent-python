@@ -70,7 +70,7 @@ jobs:
           tags: ${{ steps.base-meta.outputs.tags }}
           labels: ${{ steps.base-meta.outputs.labels }}
           build-args: |
-            python_version=${{ matrix.python-version }}
+            python_version=${{ env.PYTHON_VERSION }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
