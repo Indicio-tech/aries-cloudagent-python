@@ -1,6 +1,6 @@
 """Supplements inner model."""
 
-from typing import Optional
+from typing import Optional, Sequence
 from uuid import uuid4
 from marshmallow import fields, validate
 
@@ -44,7 +44,13 @@ class Supplement(BaseModel):
         schema_class = "SupplementSchema"
 
     def __init__(
-        self, *, type: str, ref: str, attrs: dict, id: Optional[str] = None, **kwargs
+        self,
+        *,
+        type: str,
+        ref: str,
+        attrs: Sequence[SupplementAttribute],
+        id: Optional[str] = None,
+        **kwargs
     ):
         """Initialize supplements."""
         super().__init__(**kwargs)
