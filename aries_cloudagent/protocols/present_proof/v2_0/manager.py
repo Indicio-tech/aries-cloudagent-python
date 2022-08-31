@@ -131,8 +131,7 @@ class V20PresManager:
             if pres_exch_format:
                 request_formats.append(
                     await pres_exch_format.handler(self._profile).create_bound_request(
-                        pres_ex_record,
-                        request_data,
+                        pres_ex_record, request_data
                     )
                 )
         if len(request_formats) == 0:
@@ -264,8 +263,7 @@ class V20PresManager:
 
             if pres_exch_format:
                 pres_tuple = await pres_exch_format.handler(self._profile).create_pres(
-                    pres_ex_record,
-                    request_data,
+                    pres_ex_record, request_data
                 )
                 if pres_tuple:
                     pres_formats.append(pres_tuple)
@@ -330,15 +328,20 @@ class V20PresManager:
             pres_ex_record = await V20PresExRecord.retrieve_by_tag_filter(
                 session,
                 {"thread_id": thread_id},
-                {
-                    "role": V20PresExRecord.ROLE_VERIFIER,
-                    "connection_id": connection_id,
-                },
+                {"role": V20PresExRecord.ROLE_VERIFIER, "connection_id": connection_id},
             )
 
         # Save connection id (if it wasn't already present)
         if connection_record:
             pres_ex_record.connection_id = connection_record.connection_id
+
+        if message.supplements:
+            pres_ex_record.supplements = message.supplements
+            message.supplements = None
+
+        if message.attach:
+            pres_ex_record.attach = message.attach
+            message.attach = None
 
         input_formats = message.formats
 
@@ -348,10 +351,7 @@ class V20PresManager:
             if pres_format:
                 receive_pres_return = await pres_format.handler(
                     self._profile
-                ).receive_pres(
-                    message,
-                    pres_ex_record,
-                )
+                ).receive_pres(message, pres_ex_record)
                 if isinstance(receive_pres_return, bool) and not receive_pres_return:
                     raise V20PresManagerError(
                         "Unable to verify received presentation."
@@ -384,9 +384,7 @@ class V20PresManager:
             if pres_exch_format:
                 pres_ex_record = await pres_exch_format.handler(
                     self._profile
-                ).verify_pres(
-                    pres_ex_record,
-                )
+                ).verify_pres(pres_ex_record)
 
         pres_ex_record.state = V20PresExRecord.STATE_DONE
 
