@@ -11,42 +11,9 @@ from ...protocols.issue_credential.v2_0.messages.inner.supplement import (
 )
 from ...messaging.decorators.attach_decorator import (
     AttachDecorator,
+    AttachDecoratorData,
     AttachDecoratorSchema,
 )
-
-
-class AttachmentDataContainer():
-    """Represents an attachment data container"""
-
-    def __init__(
-        self,
-        supplements: Sequence[Supplement] = None,
-        attachments: Sequence[AttachDecorator] = None,
-    ):
-        super().__init__()
-        self.supplements = supplements
-        self.attachments = attachments
-
-    def attachment_lookup(self):
-        """Create mapping from attachment identifier to attachment data."""
-
-        attach_dict = {}
-        for attachment in self.attachments:
-            attach_dict[attachment.ident] = attachment.data
-        return attach_dict
-
-    def match_by_attachment_id(self):
-        """Match supplement and attachment by attachment_id and store in
-        AttachmentDataRecord."""
-
-        attachment_dictionary = self.attachment_lookup()
-        for supplement in self.supplements:
-            record = AttachmentDataRecord(
-                attachment_id=supplement.id,
-                supplement=supplement,
-                attachment=attachment_dictionary[supplement.id]
-            )
-        # TODO: return list (?) of records
 
 
 class AttachmentDataRecord(BaseRecord):
@@ -65,13 +32,48 @@ class AttachmentDataRecord(BaseRecord):
     def __init__(
         self,
         attachment_id: str = None,
-        supplements: Supplement = None,
-        attachments: AttachDecorator = None,
+        supplement: Supplement = None,
+        attachment: AttachDecoratorData = None,
     ):
         super().__init__()
         self.attachment_id = attachment_id
-        self.supplements = supplements
-        self.attachments = attachments
+        self.supplement: Supplement = supplement
+        self.attachment: AttachDecoratorData = attachment
+
+    @classmethod
+    def attachment_lookup(
+        cls, attachments: Sequence[AttachDecorator]
+    ) -> dict[str, AttachDecoratorData]:
+        """Create mapping from attachment identifier to attachment data."""
+
+        return {attachment.ident: attachment.data for attachment in attachments}
+
+    @classmethod
+    def match_by_attachment_id(
+        cls, supplements: Sequence[Supplement], attachments: Sequence[AttachDecorator]
+    ):
+        """Match supplement and attachment by attachment_id and store in
+        AttachmentDataRecord."""
+
+        ats: dict[str, AttachDecoratorData] = AttachmentDataRecord.attachment_lookup(
+            attachments
+        )
+        return [
+            AttachmentDataRecord(
+                attachment_id=sup.id, supplement=sup, attachment=ats[sup.id]
+            )
+            for sup in supplements
+        ]
+
+    @classmethod
+    async def save_attachments(cls, session, supplements, attachments):
+        """ "Save all attachments"""
+        return [
+            await attachment.save(session)
+            for attachment in AttachmentDataRecord.match_by_attachment_id(
+                supplements, attachments
+            )
+        ]
 
 
 class AttachmentDataRecordSchema(BaseRecordSchema):
