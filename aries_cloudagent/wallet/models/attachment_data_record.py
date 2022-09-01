@@ -1,10 +1,12 @@
 """Attachment Data Record"""
 
+from typing import Sequence
 from marshmallow import fields
 
 from ...messaging.models.base_record import BaseRecord, BaseRecordSchema
 from ...protocols.issue_credential.v2_0.messages.inner.supplement import (
     Supplement,
+    SupplementAttribute,
     SupplementSchema,
 )
 from ...messaging.decorators.attach_decorator import (
@@ -21,12 +23,36 @@ class AttachmentDataRecord(BaseRecord):
 
         schema_class = "AttachmentDataRecordSchema"
 
+    RECORD_TYPE = "attachment_data_record"
+    RECORD_ID_NAME = "attachment_data_id"
+ 
+    TAG_NAMES = {"attachment_data_name"}
+
     def __init__(
-        self, supplement: Supplement = None, attachment: AttachDecorator = None
+        self,
+        supplement: Supplement = None,
+        attachments: Sequence[AttachDecorator] = None
     ):
         super().__init__()
         self.supplement = supplement
-        self.attachment = attachment
+        self.attachments = attachments
+
+    def attachment_lookup(self):
+        """Create mapping from attachment identifier to attachment data"""
+
+        attach_dict = {}
+        for attachment in self.attachments:
+            attach_dict[attachment.ident] = attachment.data
+        return attach_dict
+
+    def save(self):
+        """For each element in the supplements array, store to the record both
+        the supplement attribute itself and the referenced attachment"""
+
+        for supplement_attribute in self.supplement.attrs:
+            assert isinstance(supplement_attribute, SupplementAttribute)
+
+        # TODO: store supplement attribute with referenced attachment
 
 
 class AttachmentDataRecordSchema(BaseRecordSchema):
