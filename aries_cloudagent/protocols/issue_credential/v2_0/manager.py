@@ -614,8 +614,8 @@ class V20CredManager:
         self,
         cred_ex_record: V20CredExRecord,
         cred_id: str = None,
-        supplement: Supplement = None,
-        attachment: AttachDecorator = None,
+        supplements: Sequence[Supplement] = None,
+        attachments: Sequence[AttachDecorator] = None,
     ) -> Tuple[V20CredExRecord, V20CredAck]:
         """
         Store a credential in holder wallet; send ack to issuer.
@@ -637,11 +637,9 @@ class V20CredManager:
                 f"(must be {V20CredExRecord.STATE_CREDENTIAL_RECEIVED})"
             )
 
-        attachment_data_record = AttachmentDataRecord(
-            supplement=supplement,
-            attachment=attachment,
+        attachment_data_record = AttachmentDataRecord.save_attachments(
+            supplements=supplements, attachments=attachments
         )
-        # TODO: store attachment_data_record using indy and ld formats
 
         # Format specific store_credential handler
         for format in cred_ex_record.cred_issue.formats:
