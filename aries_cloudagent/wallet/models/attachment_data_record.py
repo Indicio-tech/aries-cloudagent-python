@@ -41,12 +41,10 @@ class AttachmentDataRecord(BaseRecord):
         self.attachment: AttachDecoratorData = attachment
 
     @classmethod
-    def attachment_lookup(
-        cls, attachments: Sequence[AttachDecorator]
-    ) -> dict[str, AttachDecoratorData]:
+    def attachment_lookup(cls, attachments: Sequence[AttachDecorator]) -> dict:
         """Create mapping from attachment identifier to attachment data."""
 
-        return {attachment.ident: attachment.data for attachment in attachments}
+        return {attachment.ident: attachment for attachment in attachments}
 
     @classmethod
     def match_by_attachment_id(
