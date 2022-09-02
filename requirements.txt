@@ -29,4 +29,3 @@ unflatten~=0.1
 qrcode[pil]~=6.1
 cbor2==5.4.2
 py-multibase==1.0.3
-py-multihash==2.0.1
