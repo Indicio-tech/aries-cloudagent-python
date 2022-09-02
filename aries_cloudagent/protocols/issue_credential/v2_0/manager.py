@@ -637,10 +637,6 @@ class V20CredManager:
                 f"(must be {V20CredExRecord.STATE_CREDENTIAL_RECEIVED})"
             )
 
-        attachment_data_record = AttachmentDataRecord.save_attachments(
-            supplements=supplements, attachments=attachments
-        )
-
         # Format specific store_credential handler
         for format in cred_ex_record.cred_issue.formats:
             cred_format = V20CredFormat.Format.get(format.format)
@@ -649,6 +645,10 @@ class V20CredManager:
                 await cred_format.handler(self.profile).store_credential(
                     cred_ex_record, cred_id
                 )
+                async with self.profile.session() as session:
+                    await AttachmentDataRecord.save_attachments(
+                        session=session, supplements=supplements, attachments=attachments
+                    )
                 # TODO: if storing multiple credentials we can't reuse the same id
                 cred_id = None
 
