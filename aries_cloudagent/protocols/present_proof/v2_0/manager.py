@@ -262,6 +262,9 @@ class V20PresManager:
             pres_exch_format = V20PresFormat.Format.get(format.format)
 
             if pres_exch_format:
+                supplements, attach = await pres_exch_format.handler(
+                    self._profile
+                ).get_supplements(pres_ex_record, request_data)
                 pres_tuple = await pres_exch_format.handler(self._profile).create_pres(
                     pres_ex_record, request_data
                 )
@@ -279,6 +282,8 @@ class V20PresManager:
             comment=comment,
             formats=[format for (format, _) in pres_formats],
             presentations_attach=[attach for (_, attach) in pres_formats],
+            supplements=supplements,
+            attach=attach,
         )
 
         # Assign thid (and optionally pthid) to message
