@@ -188,8 +188,49 @@ class Hashlink:
         return deserialized
 
     @classmethod
+    def _deserialize_data(cls, data: bytes) -> bytes:
+        """
+        Deserialize the data portion of a hashlink.
+
+        Parameters:
+            data -> The data portion of the hashlink
+        Returns:
+            bytes -> The decoded hash of the hashlink data
+        """
+        raw = multibase.decode(data)
+        header = raw[:2]
+        raw_hash = raw[2:]
+
+        # Currently only SHA2-256 is supported
+        if header[0] != 0x12:
+            raise Exception("Unknown hash algorithm used: {}".format(header[0]))
+
+        length = header[1]
+        if length != len(raw_hash):
+            raise Exception("hash length doesn't match length header")
+
+        return raw_hash
+
+    @classmethod
     def verify(
         cls, link: str, data: Optional[bytes] = None, *, check_remote: bool = False
     ) -> bool:
         """Verify the hash of the data linked to by the hashlink."""
-        ...
+
+        link_split = link.split(cls.SEPARATOR)
+
+        if link_split[0] != cls.SCHEME:
+            return False
+
+        link_data_hash = cls._deserialize_data(link_split[1])
+
+        # TODO add check for when check_remote is true
+        if not check_remote:
+            if data is None:
+                data = b""
+            data_hash = sha256(data).digest()
+
+            if link_data_hash == data_hash:
+                return True
+
+        return False
