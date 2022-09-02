@@ -1,10 +1,9 @@
 """V2.0 present-proof indy presentation-exchange format handler."""
-
 import json
 import logging
 
 from marshmallow import RAISE
-from typing import Mapping, Tuple
+from typing import List, Mapping, Sequence, Tuple
 
 from ......indy.holder import IndyHolder
 from ......indy.models.predicate import Predicate
@@ -15,6 +14,7 @@ from ......indy.util import generate_pr_nonce
 from ......indy.verifier import IndyVerifier
 from ......messaging.decorators.attach_decorator import AttachDecorator
 from ......messaging.util import canon
+from ......wallet.models.attachment_data_record import AttachmentDataRecord
 
 from ....indy.pres_exch_handler import IndyPresExchHandler
 
@@ -165,6 +165,29 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
             requested_credentials=requested_credentials,
         )
         return self.get_format_data(PRES_20, indy_proof)
+
+    async def get_supplements(
+        self, pres_ex_record: V20PresExRecord, request_data: dict = None
+    ) -> Tuple[List]:
+        """Retrieve supplements"""
+
+        requested_attributes: dict = request_data.get("requested_attributes")
+        # type: IndyPresSpecSchema.requested_attributes
+
+        supplements = []
+        attach = []
+        for attribute, value in requested_attributes:
+            # TODO: use attribute reference to retrieve attribute
+            cred_id = value.cred_id
+
+            async with self._profile.session() as session:
+                record: AttachmentDataRecord = await AttachmentDataRecord.query_by_cred_id_attribute(
+                    session, cred_id, attribute
+                )
+                supplements.append(record.supplement)
+                attach.append(record.attachment)
+
+        return supplements, attach
 
     async def receive_pres(self, message: V20Pres, pres_ex_record: V20PresExRecord):
         """Receive a presentation and check for presented values vs. proposal request."""
