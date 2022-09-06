@@ -2,7 +2,9 @@
 
 import logging
 
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
+
+from aries_cloudagent.wallet.models.attachment_data_record import AttachmentDataRecord
 
 from ...out_of_band.v1_0.models.oob_record import OobRecord
 from ....connections.models.conn_record import ConnRecord
@@ -262,9 +264,11 @@ class V20PresManager:
             pres_exch_format = V20PresFormat.Format.get(format.format)
 
             if pres_exch_format:
-                supplements, attach = await pres_exch_format.handler(
-                    self._profile
-                ).get_supplements(pres_ex_record, request_data)
+                supplements_records: List[
+                    AttachmentDataRecord
+                ] = await pres_exch_format.handler(self._profile).get_supplements(
+                    pres_ex_record, request_data
+                )
                 pres_tuple = await pres_exch_format.handler(self._profile).create_pres(
                     pres_ex_record, request_data
                 )
@@ -282,8 +286,8 @@ class V20PresManager:
             comment=comment,
             formats=[format for (format, _) in pres_formats],
             presentations_attach=[attach for (_, attach) in pres_formats],
-            supplements=supplements,
-            attach=attach,
+            supplements=[record.supplement for record in supplements_records],
+            attach=[record.attachment for record in supplements_records],
         )
 
         # Assign thid (and optionally pthid) to message
