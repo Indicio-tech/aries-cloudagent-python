@@ -663,17 +663,18 @@ class TestV20PresManager(AsyncTestCase):
                 request_presentations_attach=[
                     AttachDecorator.data_json(DIF_PRES_REQ, ident="dif")
                 ],
-            ).serialize(),
+            ).serialize()
         )
         with async_mock.patch.object(
             DIFPresFormatHandler, "create_pres", autospec=True
-        ) as mock_create_pres:
+        ) as mock_create_pres, async_mock.patch.object(
+            DIFPresFormatHandler, "get_supplements"
+        ) as mock_get_supplements:
             mock_create_pres.return_value = None
+            mock_get_supplements.return_value = []
             with self.assertRaises(V20PresManagerError) as context:
                 await self.manager.create_pres(
-                    pres_ex_record=px_rec,
-                    request_data={},
-                    comment="test",
+                    pres_ex_record=px_rec, request_data={}, comment="test"
                 )
             assert "Unable to create presentation. ProblemReport message sent" in str(
                 context.exception
@@ -999,10 +1000,13 @@ class TestV20PresManager(AsyncTestCase):
             test_indy_handler, "AttachDecorator", autospec=True
         ) as mock_attach_decorator, async_mock.patch.object(
             test_indy_util_module.LOGGER, "info", async_mock.MagicMock()
-        ) as mock_log_info:
+        ) as mock_log_info, async_mock.patch.object(
+            test_indy_handler.IndyPresExchangeHandler, "get_supplements"
+        ) as mock_get_supplements:
             mock_attach_decorator.data_base64 = async_mock.MagicMock(
                 return_value=mock_attach_decorator
             )
+            mock_get_supplements.return_value = []
 
             req_creds = await indy_proof_req_preview2indy_requested_creds(
                 INDY_PROOF_REQ_NAME, preview=None, holder=self.holder
