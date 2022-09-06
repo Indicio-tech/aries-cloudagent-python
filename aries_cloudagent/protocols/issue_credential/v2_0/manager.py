@@ -522,6 +522,8 @@ class V20CredManager:
             comment=comment,
             formats=[format for (format, _) in issue_formats],
             credentials_attach=[attach for (_, attach) in issue_formats],
+            supplements=cred_ex_record.supplements or None,
+            attachments=cred_ex_record.attachments or None,
         )
 
         cred_ex_record.state = V20CredExRecord.STATE_ISSUED

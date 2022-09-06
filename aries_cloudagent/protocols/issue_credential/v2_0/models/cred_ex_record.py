@@ -226,6 +226,7 @@ class V20CredExRecord(BaseExchangeRecord):
                     "supplements",
                     "attachments",
                 )
+                if getattr(self, prop)
             },
         }
 
