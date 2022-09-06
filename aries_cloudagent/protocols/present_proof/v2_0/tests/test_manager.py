@@ -679,6 +679,32 @@ class TestV20PresManager(AsyncTestCase):
                 context.exception
             )
 
+    async def test_create_pres_catch_dif_not_implemented_error(self):
+        px_rec = V20PresExRecord(
+            pres_request=V20PresRequest(
+                formats=[
+                    V20PresFormat(
+                        attach_id="dif",
+                        format_=ATTACHMENT_FORMAT[PRES_20_REQUEST][
+                            V20PresFormat.Format.DIF.api
+                        ],
+                    )
+                ],
+                request_presentations_attach=[
+                    AttachDecorator.data_json(DIF_PRES_REQ, ident="dif")
+                ],
+            ).serialize()
+        )
+        with async_mock.patch.object(
+            DIFPresFormatHandler, "create_pres", autospec=True
+        ) as mock_create_pres:
+            mock_create_pres.return_value = None
+            with self.assertRaises(NotImplementedError) as context:
+                await self.manager.create_pres(
+                    pres_ex_record=px_rec, request_data={}, comment="test"
+                )
+            assert "Method not implemented for DIF format" in str(context.exception)
+
     async def test_receive_pres_catch_diferror(self):
         connection_record = async_mock.MagicMock(connection_id=CONN_ID)
         pres_x = V20Pres(
