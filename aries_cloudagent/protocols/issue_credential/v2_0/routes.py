@@ -12,9 +12,12 @@ from aiohttp_apispec import (
     request_schema,
     response_schema,
 )
-from marshmallow import ValidationError, fields, validate, validates_schema
+from marshmallow import fields, validate, validates_schema, ValidationError
+import multibase
 
 from . import problem_report_for_record, report_problem
+from ...out_of_band.v1_0.models.oob_record import OobRecord
+from ....wallet.util import default_did_from_verkey, b64_to_bytes
 from ....admin.request_context import AdminRequestContext
 from ....connections.models.conn_record import ConnRecord
 from ....core.profile import Profile
@@ -28,6 +31,7 @@ from ....messaging.decorators.attach_decorator import (
 from ....messaging.models.base import BaseModelError
 from ....messaging.models.openapi import OpenAPISchema
 from ....messaging.valid import (
+    BASE64URL,
     INDY_CRED_DEF_ID,
     INDY_DID,
     INDY_SCHEMA_ID,
@@ -52,6 +56,9 @@ from .messages.inner.supplement import SupplementSchema
 from .models.cred_ex_record import V20CredExRecord, V20CredExRecordSchema
 from .models.detail.indy import V20CredExRecordIndySchema
 from .models.detail.ld_proof import V20CredExRecordLDProofSchema
+from .formats.handler import V20CredFormatError
+from .formats.ld_proof.models.cred_detail import LDProofVCDetailSchema
+from .hashlink import Hashlink
 
 LOGGER = logging.getLogger(__name__)
 
@@ -388,6 +395,63 @@ class V20CredExIdMatchInfoSchema(OpenAPISchema):
 
     cred_ex_id = fields.Str(
         description="Credential exchange identifier", required=True, **UUID4
+    )
+
+
+class HashlinkMetadataSchema(OpenAPISchema):
+    """Schema for metadata of hashlink."""
+
+    url = fields.List(
+        fields.Str(),
+        description="List of urls pointing to resource.",
+        required=False,
+    )
+    content_type = fields.Str(
+        description="Content type of resource",
+        required=False,
+        data_key="content-type",
+    )
+    experimental = fields.Dict(
+        description="Arbitrary metadata",
+        required=False,
+    )
+
+
+class HashlinkRequestSchema(OpenAPISchema):
+    """Request Schema for Hashlink endpoint."""
+
+    alg = fields.Str(
+        description=(
+            "Algorithm to use for the hashlink (only sha2-256 supported for now)."
+        ),
+        required=False,
+        default="sha2-256",
+        validate=validate.OneOf(["sha2-256"]),
+    )
+    enc = fields.Str(
+        description="Encoding to use for the hashlink.",
+        required=False,
+        default="base58btc",
+        validate=validate.OneOf([enc.encoding for enc in multibase.ENCODINGS]),
+    )
+    data = fields.Str(
+        required=True,
+        description="Base64url encoded data to form into a hashlink.",
+        **BASE64URL,
+    )
+    metadata = fields.Nested(
+        HashlinkMetadataSchema,
+        description="Metadata for the hashlink.",
+        required=False,
+    )
+
+
+class HashlinkResponseSchema(OpenAPISchema):
+    """Response Schema for hashlink endpoint."""
+
+    result = fields.Str(
+        description="Hashlink.",
+        required=True,
     )
 
 
@@ -1601,6 +1665,20 @@ async def credential_exchange_problem_report(request: web.BaseRequest):
     return web.json_response({})
 
 
+@docs(
+    tags=["issue-credential v2.0"], summary="Create a hashlink for use in credentials"
+)
+@request_schema(HashlinkRequestSchema())
+@response_schema(HashlinkResponseSchema(), 200, description="Hashlink.")
+async def create_hashlink(request: web.BaseRequest):
+    """Request handler for creating a hashlink."""
+
+    body = await request.json()
+    body["data"] = b64_to_bytes(body["data"], urlsafe=True)
+    link = Hashlink(**body)
+    return web.json_response({"result": link})
+
+
 async def register(app: web.Application):
     """Register routes."""
 
@@ -1655,6 +1733,10 @@ async def register(app: web.Application):
             web.delete(
                 "/issue-credential-2.0/records/{cred_ex_id}",
                 credential_exchange_remove,
+            ),
+            web.post(
+                "/issue-credential-2.0/hashlink",
+                create_hashlink,
             ),
         ]
     )
