@@ -1,8 +1,7 @@
 """Credential exchange admin routes."""
 
-import logging
-
 from json.decoder import JSONDecodeError
+import logging
 from typing import Mapping
 
 from aiohttp import web
@@ -13,17 +12,19 @@ from aiohttp_apispec import (
     request_schema,
     response_schema,
 )
-from marshmallow import fields, validate, validates_schema, ValidationError
+from marshmallow import ValidationError, fields, validate, validates_schema
 
-from ...out_of_band.v1_0.models.oob_record import OobRecord
-from ....wallet.util import default_did_from_verkey
+from . import problem_report_for_record, report_problem
 from ....admin.request_context import AdminRequestContext
 from ....connections.models.conn_record import ConnRecord
 from ....core.profile import Profile
 from ....indy.holder import IndyHolderError
 from ....indy.issuer import IndyIssuerError
 from ....ledger.error import LedgerError
-from ....messaging.decorators.attach_decorator import AttachDecorator
+from ....messaging.decorators.attach_decorator import (
+    AttachDecorator,
+    AttachDecoratorSchema,
+)
 from ....messaging.models.base import BaseModelError
 from ....messaging.models.openapi import OpenAPISchema
 from ....messaging.valid import (
@@ -31,25 +32,26 @@ from ....messaging.valid import (
     INDY_DID,
     INDY_SCHEMA_ID,
     INDY_VERSION,
-    UUIDFour,
     UUID4,
+    UUIDFour,
 )
 from ....storage.error import StorageError, StorageNotFoundError
-from ....utils.tracing import trace_event, get_timer, AdminAPIMessageTracingSchema
+from ....utils.tracing import AdminAPIMessageTracingSchema, get_timer, trace_event
 from ....vc.ld_proofs.error import LinkedDataProofException
-
-from . import problem_report_for_record, report_problem
+from ....wallet.util import default_did_from_verkey
+from ...out_of_band.v1_0.models.oob_record import OobRecord
+from .formats.handler import V20CredFormatError
+from .formats.ld_proof.models.cred_detail import LDProofVCDetailSchema
 from .manager import V20CredManager, V20CredManagerError
 from .message_types import ATTACHMENT_FORMAT, CRED_20_PROPOSAL, SPEC_URI
 from .messages.cred_format import V20CredFormat
 from .messages.cred_problem_report import ProblemReportReason
 from .messages.cred_proposal import V20CredProposal
 from .messages.inner.cred_preview import V20CredPreview, V20CredPreviewSchema
+from .messages.inner.supplement import SupplementSchema
 from .models.cred_ex_record import V20CredExRecord, V20CredExRecordSchema
-from .models.detail.ld_proof import V20CredExRecordLDProofSchema
 from .models.detail.indy import V20CredExRecordIndySchema
-from .formats.handler import V20CredFormatError
-from .formats.ld_proof.models.cred_detail import LDProofVCDetailSchema
+from .models.detail.ld_proof import V20CredExRecordLDProofSchema
 
 LOGGER = logging.getLogger(__name__)
 
@@ -209,6 +211,19 @@ class V20IssueCredSchemaCore(AdminAPIMessageTracingSchema):
     )
 
     credential_preview = fields.Nested(V20CredPreviewSchema, required=False)
+
+    supplements = fields.Nested(
+        SupplementSchema,
+        description="Supplements to the credential",
+        many=True,
+        required=False,
+    )
+    attachments = fields.Nested(
+        AttachDecoratorSchema,
+        many=True,
+        required=False,
+        description="Attachments of other data associated with the credential",
+    )
 
     @validates_schema
     def validate(self, data, **kwargs):
@@ -629,6 +644,8 @@ async def credential_exchange_send(request: web.BaseRequest):
     if not filt_spec:
         raise web.HTTPBadRequest(reason="Missing filter")
     preview_spec = body.get("credential_preview")
+    supplements = body.get("supplements")
+    attachments = body.get("attachments")
     auto_remove = body.get("auto_remove")
     trace_msg = body.get("trace")
 
@@ -667,6 +684,8 @@ async def credential_exchange_send(request: web.BaseRequest):
             connection_id,
             cred_proposal=cred_proposal,
             auto_remove=auto_remove,
+            supplements=supplements,
+            attachments=attachments,
         )
         result = cred_ex_record.serialize()
 

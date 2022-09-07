@@ -2,12 +2,14 @@
 
 import logging
 
-from typing import Mapping, Optional, Tuple
+from typing import Mapping, Optional, Sequence, Tuple, Union
+
 
 from ....connections.models.conn_record import ConnRecord
 from ....core.oob_processor import OobRecord
 from ....core.error import BaseError
 from ....core.profile import Profile
+from ....messaging.decorators.attach_decorator import AttachDecorator
 from ....messaging.responder import BaseResponder
 from ....storage.error import StorageError, StorageNotFoundError
 
@@ -19,6 +21,7 @@ from .messages.cred_problem_report import V20CredProblemReport, ProblemReportRea
 from .messages.cred_proposal import V20CredProposal
 from .messages.cred_request import V20CredRequest
 from .messages.inner.cred_preview import V20CredPreview
+from .messages.inner.supplement import Supplement
 from .models.cred_ex_record import V20CredExRecord
 
 LOGGER = logging.getLogger(__name__)
@@ -56,6 +59,8 @@ class V20CredManager:
         connection_id: str,
         cred_proposal: V20CredProposal,
         auto_remove: bool = None,
+        supplements: Sequence[Union[Mapping, Supplement]] = None,
+        attachments: Sequence[Union[Mapping, AttachDecorator]] = None,
     ) -> Tuple[V20CredExRecord, V20CredOffer]:
         """
         Set up a new credential exchange record for an automated send.
@@ -79,6 +84,8 @@ class V20CredManager:
             auto_issue=True,
             auto_remove=auto_remove,
             trace=(cred_proposal._trace is not None),
+            supplements=supplements,
+            attachments=attachments,
         )
         (cred_ex_record, cred_offer) = await self.create_offer(
             cred_ex_record=cred_ex_record,
