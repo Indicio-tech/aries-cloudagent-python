@@ -391,7 +391,6 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
 
             # Only hashlink data validation is supported at the moment
             if supplement.type != "hashlink-data":
-            if not data:
                 valid_suppliments = False
                 break
 
