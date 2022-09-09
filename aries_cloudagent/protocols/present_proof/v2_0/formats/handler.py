@@ -80,7 +80,7 @@ class V20PresFormatHandler(ABC):
     async def get_supplements(
         self, pres_ex_record: V20PresExRecord, request_data: dict = None
     ) -> Sequence[Supplement]:
-        """Retrieve supplements"""
+        """Retrieve supplements."""
 
     @abstractmethod
     async def receive_pres(self, message: V20Pres, pres_ex_record: V20PresExRecord):

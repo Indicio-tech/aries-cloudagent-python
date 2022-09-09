@@ -19,10 +19,10 @@ from ...messaging.decorators.attach_decorator import (
 
 
 class AttachmentDataRecord(BaseRecord):
-    """Represents an attachment data record"""
+    """Represents an attachment data record."""
 
     class Meta:
-        """AttachmentDataRecord metadata"""
+        """AttachmentDataRecord metadata."""
 
         schema_class = "AttachmentDataRecordSchema"
 
@@ -47,14 +47,14 @@ class AttachmentDataRecord(BaseRecord):
     async def get_attachment_data_record(
         self, session: ProfileSession, attachment_id: str
     ):
-        """Query by attachment_id"""
+        """Query by attachment_id."""
         tag_filter = {"attachment_id": attachment_id}
         return await self.retrieve_by_tag_filter(session, tag_filter)
 
     async def query_by_cred_id_attribute(
         self, session: ProfileSession, cred_id: str, attribute: str
     ):
-        """Query by cred_id"""
+        """Query by cred_id."""
         tag_filter = {"cred_id": cred_id, "attribute": attribute}
         return await self.retrieve_by_tag_filter(session, tag_filter)
 
@@ -91,7 +91,7 @@ class AttachmentDataRecord(BaseRecord):
 
     @classmethod
     async def save_attachments(cls, session, supplements, attachments, cred_id):
-        """ "Save all attachments"""
+        """ "Save all attachments."""
         return [
             await attachment.save(session)
             for attachment in AttachmentDataRecord.match_by_attachment_id(
@@ -104,12 +104,12 @@ class AttachmentDataRecordSchema(BaseRecordSchema):
     """AttachmentDataRecord schema"""
 
     class Meta:
-        """AttachmentDataRecordSchema metadata"""
+        """AttachmentDataRecordSchema metadata."""
 
         model_class = AttachmentDataRecord
 
     attachment_id = fields.Str(
-        description="Attachment identifier",
+        description="Attachment identifier.",
         example=UUIDFour.EXAMPLE,
         required=False,
         allow_none=False,
