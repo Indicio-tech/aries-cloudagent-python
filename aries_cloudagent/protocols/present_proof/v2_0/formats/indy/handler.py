@@ -360,6 +360,62 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
         proof = message.attachment(IndyPresExchangeHandler.format)
         _check_proof_vs_proposal()
 
+    async def verify_supplements(self, pres_ex_record: V20PresExRecord) -> bool:
+        """Verify the supplements associated with a presentation."""
+
+        valid_supplements = True
+        indy_proof = pres_ex_record.pres.attachment(IndyPresExchangeHandler.format)
+
+        def find_attachment(attatchment_id: str) -> str:
+            for attachment in pres_ex_record.attach:
+                if attachment.ident == attatchment_id:
+                    return attachment
+            return None
+
+        def find_supplement_attr(supplement, key):
+            for attr in supplement.attrs:
+                if attr.key == key:
+                    return attr.value
+            return None
+
+        supplements = pres_ex_record.supplements or []
+        for supplement in supplements:
+
+            # Only hashlink data validation is supported at the moment
+            if supplement.type != "hashlink-data":
+                valid_supplements = False
+                break
+
+            attatchment_id = supplements.ref
+            attachment = find_attachment(attatchment_id)
+
+            # No matching attachment found
+            if not attachment:
+                valid_supplements = False
+                break
+
+            # Assuming that only B64 data attachment is allowed, retreive the data
+            data = attachment.data.base64
+            if not data:
+                valid_supplements = False
+                break
+
+            # Grab the attr that contains the hashlink
+            key = find_supplement_attr(supplement, "field")
+
+            # Retrieve the hashlink and the associated decoded data
+            hashlink = indy_proof["requested_proof"]["revealed_attrs"][key]["raw"]
+            data = b64_to_bytes(data, urlsafe=True)
+
+            # Verify the hashlinks
+            valid_supplements = Hashlink.verify(hashlink, data)
+
+            # Don't bother verifying more suppliments if this one failed to validate
+            if not valid_supplements:
+                break
+
+        return valid_supplements
+
     async def verify_pres(self, pres_ex_record: V20PresExRecord) -> V20PresExRecord:
         """
         Verify a presentation.

@@ -458,6 +458,10 @@ class DIFPresFormatHandler(V20PresFormatHandler):
                 )
                 return False
 
+    async def verify_supplements(self, pres_ex_record: V20PresExRecord) -> bool:
+        """Verify the supplements associated with a presentation."""
+        raise NotImplementedError("Method not implemented for DIF format")
+
     async def verify_pres(self, pres_ex_record: V20PresExRecord) -> V20PresExRecord:
         """
         Verify a presentation.

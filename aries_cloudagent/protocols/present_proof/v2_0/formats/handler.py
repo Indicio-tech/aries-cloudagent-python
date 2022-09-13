@@ -87,5 +87,9 @@ class V20PresFormatHandler(ABC):
         """Receive a presentation, from message in context on manager creation."""
 
     @abstractmethod
+    async def verify_supplements(self, pres_ex_record: V20PresExRecord) -> bool:
+        """Verify the supplements associated with a presentation."""
+
+    @abstractmethod
     async def verify_pres(self, pres_ex_record: V20PresExRecord) -> V20PresExRecord:
         """Verify a presentation."""
