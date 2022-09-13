@@ -139,10 +139,12 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
                 indy_proof_request = proof_request.attachment(
                     IndyPresExchangeHandler.format
                 )
-                requested_credentials = await indy_proof_req_preview2indy_requested_creds(
-                    indy_proof_request,
-                    preview=None,
-                    holder=self._profile.inject(IndyHolder),
+                requested_credentials = (
+                    await indy_proof_req_preview2indy_requested_creds(
+                        indy_proof_request,
+                        preview=None,
+                        holder=self._profile.inject(IndyHolder),
+                    )
                 )
             except ValueError as err:
                 LOGGER.warning(f"{err}")
@@ -408,7 +410,7 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
 
         valid_suppliments = True
 
-        def find_attachment(attatchment_id: str)->str:
+        def find_attachment(attatchment_id: str) -> str:
             for attachment in pres_ex_record.attach:
                 if attachment.ident == attatchment_id:
                     return attachment

@@ -2086,12 +2086,14 @@ class TestV20PresManager(AsyncTestCase):
             pres_request=pres_request,
             pres=pres,
         )
-        px_rec_in.supplements = [Supplement(
-            type="hashlink_data",
-            attrs=[{"key": "field", "value": "<fieldname>"}],
-            ref=None,
-            id="attachment_id",
-        )]
+        px_rec_in.supplements = [
+            Supplement(
+                type="hashlink_data",
+                attrs=[{"key": "field", "value": "<fieldname>"}],
+                ref=None,
+                id="attachment_id",
+            )
+        ]
         self.profile.context.injector.bind_instance(
             BaseMultitenantManager,
             async_mock.MagicMock(MultitenantManager, autospec=True),

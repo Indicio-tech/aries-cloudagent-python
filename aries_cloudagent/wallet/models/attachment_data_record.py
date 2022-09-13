@@ -92,7 +92,7 @@ class AttachmentDataRecord(BaseRecord):
 
     @classmethod
     async def save_attachments(cls, session, supplements, attachments, cred_id):
-        """ "Save all attachments."""
+        """Save all attachments."""
         return [
             await attachment.save(session)
             for attachment in AttachmentDataRecord.match_by_attachment_id(
