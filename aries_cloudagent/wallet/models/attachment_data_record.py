@@ -116,18 +116,15 @@ class AttachmentDataRecordSchema(BaseRecordSchema):
         allow_none=False,
         data_key="@id",
     )
-    supplements = fields.Nested(
+    supplement = fields.Dict(
         SupplementSchema,
-        description="Supplements to the credential",
-        many=True,
+        description="Supplement to the credential",
         required=False,
     )
-    attachments = fields.Nested(
+    attachment = fields.Dict(
         AttachDecoratorSchema,
-        many=True,
         required=False,
         description="Attachments of other data associated with the credential",
-        data_key="~attach",
     )
     cred_id = fields.Str(
         example="3fa85f64-5717-4562-b3fc-2c963f66afa6",
