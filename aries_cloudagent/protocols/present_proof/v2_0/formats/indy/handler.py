@@ -1,37 +1,33 @@
 """V2.0 present-proof indy presentation-exchange format handler."""
 import json
 import logging
-
-from marshmallow import RAISE
 from typing import List, Mapping, Tuple
 
+from marshmallow import RAISE
+
+from ......indy.credx.holder import _normalize_attr_name
+from ......indy.holder import IndyHolder, IndyHolderError
 from ......indy.models.predicate import Predicate
 from ......indy.models.proof import IndyProofSchema
 from ......indy.models.proof_request import IndyProofRequestSchema
 from ......indy.models.xform import indy_proof_req_preview2indy_requested_creds
 from ......indy.util import generate_pr_nonce
 from ......indy.verifier import IndyVerifier
-from ......indy.credx.holder import _normalize_attr_name
-from ......indy.holder import IndyHolder, IndyHolderError
 from ......messaging.decorators.attach_decorator import AttachDecorator
 from ......messaging.util import canon
-from ......messaging.models.base_record import BaseRecord
 from ......wallet.models.attachment_data_record import AttachmentDataRecord
 from ......wallet.util import b64_to_bytes
 from .....issue_credential.v2_0.hashlink import Hashlink
-
 from ....indy.pres_exch_handler import IndyPresExchHandler
-
 from ...message_types import (
     ATTACHMENT_FORMAT,
-    PRES_20_REQUEST,
     PRES_20,
     PRES_20_PROPOSAL,
+    PRES_20_REQUEST,
 )
 from ...messages.pres import V20Pres
 from ...messages.pres_format import V20PresFormat
 from ...models.pres_exchange import V20PresExRecord
-
 from ..handler import V20PresFormatHandler, V20PresFormatHandlerError
 
 LOGGER = logging.getLogger(__name__)
@@ -201,29 +197,18 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
         for attr_referent, value in requested_attributes.items():
             cred_id = value["cred_id"]
 
-            if attr_referent in indy_pres_request["requested_attributes"]:
-                attr = indy_pres_request["requested_attributes"][attr_referent]
-                if "name" in attr:
-                    attribute_name = _normalize_attr_name(attr["name"])
-                elif "names" in attr:
-                    names_list = [_normalize_attr_name(name) for name in attr["names"]]
-
-                    async with self._profile.session() as session:
-                        tag_filter = {
-                            "cred_id": cred_id,
-                            "$or": [{"name": name} for name in names_list],
-                        }
-                        attribute_name = await BaseRecord.retrieve_by_tag_filter(
-                            session, tag_filter
-                        )
-
-                else:
-                    raise IndyHolderError(f"Unknown presentation request attr: {attr}")
-            else:
+            if attr_referent not in indy_pres_request["requested_attributes"]:
                 raise IndyHolderError(
                     f"Unknown presentation request referent: {attr_referent}"
                 )
 
+            attr = indy_pres_request["requested_attributes"][attr_referent]
+            if "name" in attr:
+                attribute_name = _normalize_attr_name(attr["name"])
+            elif "names" in attr:
+                attribute_name = [_normalize_attr_name(name) for name in attr["names"]]
+            else:
+                raise IndyHolderError(f"Unknown presentation request attr: {attr}")
             async with self._profile.session() as session:
                 record: AttachmentDataRecord = (
                     await AttachmentDataRecord.query_by_cred_id_attribute(
