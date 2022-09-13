@@ -5,13 +5,18 @@ from typing import List, Sequence
 from marshmallow import fields
 
 from ...core.profile import ProfileSession
-from ...messaging.decorators.attach_decorator import (AttachDecorator,
-                                                      AttachDecoratorData,
-                                                      AttachDecoratorSchema)
+from ...messaging.decorators.attach_decorator import (
+    AttachDecorator,
+    AttachDecoratorData,
+    AttachDecoratorSchema,
+)
 from ...messaging.models.base_record import BaseRecord, BaseRecordSchema
 from ...messaging.valid import UUIDFour
 from ...protocols.issue_credential.v2_0.messages.inner.supplement import (
-    Supplement, SupplementAttribute, SupplementSchema)
+    Supplement,
+    SupplementAttribute,
+    SupplementSchema,
+)
 
 
 class AttachmentDataRecord(BaseRecord):
