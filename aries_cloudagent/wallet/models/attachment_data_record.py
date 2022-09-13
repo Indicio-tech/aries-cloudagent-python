@@ -121,12 +121,12 @@ class AttachmentDataRecordSchema(BaseRecordSchema):
         allow_none=False,
         data_key="@id",
     )
-    supplement = fields.Dict(
+    supplement = fields.Nested(
         SupplementSchema,
         description="Supplement to the credential",
         required=False,
     )
-    attachment = fields.Dict(
+    attachment = fields.Nested(
         AttachDecoratorSchema,
         required=False,
         description="Attachments of other data associated with the credential",
