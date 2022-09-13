@@ -449,58 +449,9 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
             rev_reg_entries,
         )
 
-        valid_suppliments = True
-
-        def find_attachment(attatchment_id: str) -> str:
-            for attachment in pres_ex_record.attach:
-                if attachment.ident == attatchment_id:
-                    return attachment
-            return None
-
-        def find_supplement_attr(supplement, key):
-            for attr in supplement.attrs:
-                if attr.key == key:
-                    return attr.value
-            return None
-
-        supplements = pres_ex_record.supplements
-        for supplement in supplements:
-
-            # Only hashlink data validation is supported at the moment
-            if supplement.type != "hashlink-data":
-                valid_suppliments = False
-                break
-
-            attatchment_id = supplements.ref
-            attachment = find_attachment(attatchment_id)
-
-            # No matching attachment found
-            if not attachment:
-                valid_suppliments = False
-                break
-
-            # Assuming that only B64 data attachment is allowed, retreive the data
-            data = attachment.data.base64
-            if not data:
-                valid_suppliments = False
-                break
-
-            # Grab the attr that contains the hashlink
-            key = find_supplement_attr(supplement, "field")
-
-            # Retrieve the hashlink and the associated decoded data
-            hashlink = indy_proof["requested_proof"]["revealed_attrs"][key]["raw"]
-            data = b64_to_bytes(data, urlsafe=True)
-
-            # Verify the hashlinks
-            valid_suppliments = Hashlink.verify(hashlink, data)
-
-            # Don't bother verifying more suppliments if this one failed to validate
-            if not valid_suppliments:
-                break
-
-        if verified and not valid_suppliments:
-            verified = valid_suppliments
+        valid_supplements = await self.verify_supplements(pres_ex_record)
+        if verified and not valid_supplements:
+            verified = valid_supplements
 
         pres_ex_record.verified = json.dumps(verified)
         return pres_ex_record
