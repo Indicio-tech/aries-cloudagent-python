@@ -51,6 +51,7 @@ class AttachmentDataRecord(BaseRecord):
         tag_filter = {"attachment_id": attachment_id}
         return await self.retrieve_by_tag_filter(session, tag_filter)
 
+    @classmethod
     async def query_by_cred_id_attribute(
         self, session: ProfileSession, cred_id: str, attribute: str
     ):

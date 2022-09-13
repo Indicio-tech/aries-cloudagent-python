@@ -23,6 +23,8 @@ from .....messaging.responder import BaseResponder, MockResponder
 from .....multitenant.base import BaseMultitenantManager
 from .....multitenant.manager import MultitenantManager
 from .....storage.error import StorageNotFoundError
+from .....protocols.issue_credential.v2_0.messages.inner.supplement import Supplement
+from .....wallet.models.attachment_data_record import AttachmentDataRecord
 
 from ...indy import pres_exch_handler as test_indy_util_module
 
@@ -1101,7 +1103,9 @@ class TestV20PresManager(AsyncTestCase):
             test_indy_util_module, "RevocationRegistry", autospec=True
         ) as mock_rr, async_mock.patch.object(
             test_indy_util_module.LOGGER, "error", async_mock.MagicMock()
-        ) as mock_log_error:
+        ) as mock_log_error, async_mock.patch.object(
+            AttachmentDataRecord, "query_by_cred_id_attribute"
+        ):
             mock_rr.from_definition = async_mock.MagicMock(return_value=more_magic_rr)
 
             mock_attach_decorator.data_base64 = async_mock.MagicMock(
@@ -2082,6 +2086,12 @@ class TestV20PresManager(AsyncTestCase):
             pres_request=pres_request,
             pres=pres,
         )
+        px_rec_in.supplements = [Supplement(
+            type="hashlink_data",
+            attrs=[{"key": "field", "value": "<fieldname>"}],
+            ref=None,
+            id="attachment_id",
+        )]
         self.profile.context.injector.bind_instance(
             BaseMultitenantManager,
             async_mock.MagicMock(MultitenantManager, autospec=True),
