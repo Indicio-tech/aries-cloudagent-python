@@ -1,21 +1,17 @@
 """Attachment Data Record"""
 
-from typing import Sequence
+from typing import List, Sequence
+
 from marshmallow import fields
 
 from ...core.profile import ProfileSession
+from ...messaging.decorators.attach_decorator import (AttachDecorator,
+                                                      AttachDecoratorData,
+                                                      AttachDecoratorSchema)
 from ...messaging.models.base_record import BaseRecord, BaseRecordSchema
 from ...messaging.valid import UUIDFour
 from ...protocols.issue_credential.v2_0.messages.inner.supplement import (
-    Supplement,
-    SupplementAttribute,
-    SupplementSchema,
-)
-from ...messaging.decorators.attach_decorator import (
-    AttachDecorator,
-    AttachDecoratorData,
-    AttachDecoratorSchema,
-)
+    Supplement, SupplementAttribute, SupplementSchema)
 
 
 class AttachmentDataRecord(BaseRecord):
@@ -53,11 +49,15 @@ class AttachmentDataRecord(BaseRecord):
 
     @classmethod
     async def query_by_cred_id_attribute(
-        self, session: ProfileSession, cred_id: str, attribute: str
+        cls, session: ProfileSession, cred_id: str, attribute: str | List[str]
     ):
         """Query by cred_id."""
-        tag_filter = {"cred_id": cred_id, "attribute": attribute}
-        return await self.retrieve_by_tag_filter(session, tag_filter)
+        if isinstance(attribute, list):
+            attrs = [{"attribute": attr} for attr in attribute]
+            tag_filter = {"cred_id": cred_id, "$or": attrs}
+        else:
+            tag_filter = {"cred_id": cred_id, "attribute": attribute}
+        return await cls.retrieve_by_tag_filter(session, tag_filter)
 
     @classmethod
     def attachment_lookup(cls, attachments: Sequence[AttachDecorator]) -> dict:
