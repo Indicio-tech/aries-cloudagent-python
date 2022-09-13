@@ -1,6 +1,6 @@
 """Attachment Data Record"""
 
-from typing import List, Sequence
+from typing import List, Sequence, Union
 
 from marshmallow import fields
 
@@ -54,7 +54,7 @@ class AttachmentDataRecord(BaseRecord):
 
     @classmethod
     async def query_by_cred_id_attribute(
-        cls, session: ProfileSession, cred_id: str, attribute: str | List[str]
+        cls, session: ProfileSession, cred_id: str, attribute: Union[str, List[str]]
     ):
         """Query by cred_id."""
         if isinstance(attribute, list):
