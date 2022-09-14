@@ -38,8 +38,8 @@ class V20Pres(AgentMessage):
         comment: str = None,
         formats: Sequence[V20PresFormat] = None,
         presentations_attach: Sequence[AttachDecorator] = None,
-        supplements: Supplement = None,
-        attach: AttachDecorator = None,
+        supplements: Sequence[Supplement] = None,
+        attachments: Sequence[AttachDecorator] = None,
         **kwargs,
     ):
         """
@@ -57,7 +57,7 @@ class V20Pres(AgentMessage):
             list(presentations_attach) if presentations_attach else []
         )
         self.supplements = supplements
-        self.attach = attach
+        self.attachments = attachments
 
     def attachment(self, fmt: V20PresFormat.Format = None) -> dict:
         """
@@ -112,7 +112,7 @@ class V20PresSchema(AgentMessageSchema):
         many=True,
         required=False,
     )
-    attach = fields.Nested(
+    attachments = fields.Nested(
         AttachDecoratorSchema,
         many=True,
         required=False,

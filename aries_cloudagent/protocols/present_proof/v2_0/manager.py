@@ -287,7 +287,7 @@ class V20PresManager:
             formats=[format for (format, _) in pres_formats],
             presentations_attach=[attach for (_, attach) in pres_formats],
             supplements=[record.supplement for record in supplements_records],
-            attach=[record.attachment for record in supplements_records],
+            attachments=[record.attachment for record in supplements_records],
         )
 
         # Assign thid (and optionally pthid) to message
@@ -348,9 +348,9 @@ class V20PresManager:
             pres_ex_record.supplements = message.supplements
             message.supplements = None
 
-        if message.attach:
-            pres_ex_record.attach = message.attach
-            message.attach = None
+        if message.attachments:
+            pres_ex_record.attachments = message.attachments
+            message.attachments = None
 
         input_formats = message.formats
 
