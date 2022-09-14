@@ -322,8 +322,11 @@ class V20PresExRecordSchema(BaseExchangeSchema):
         required=False, description="Error message", example="Invalid structure"
     )
     supplements = fields.Nested(
-        SupplementSchema(), required=False, description="Supplementary attachment data"
+        SupplementSchema(),
+        required=False,
+        many=True,
+        description="Supplementary attachment data"
     )
     attachments = fields.Nested(
-        AttachDecoratorSchema(), required=False, description="File attachments"
+        AttachDecoratorSchema(), required=False, many=True, description="File attachments"
     )
