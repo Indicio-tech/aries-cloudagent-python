@@ -86,11 +86,11 @@ class AttachmentDataRecord(BaseRecord):
 
         return [
             AttachmentDataRecord(
-                attachment_id=sup.id,
+                attachment_id=sup.ref,
                 supplement=sup,
-                attachment=ats[sup.id],
+                attachment=ats[sup.ref],
                 cred_id=cred_id,
-                attribute=sup.attrs[0]["value"],
+                attribute=sup.attrs[0].value,
             )
             for sup in supplements
         ]
