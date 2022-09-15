@@ -573,6 +573,12 @@ class V20CredManager:
                     role=V20CredExRecord.ROLE_HOLDER,
                 )
             )
+            cred_ex_record.supplements = cred_issue_message.supplements
+            cred_ex_record.attachments = cred_issue_message.attachments
+            await cred_ex_record.save(
+                session,
+                reason="Save credential exchange record with supplements and attachments",
+            )
 
         cred_request_message = cred_ex_record.cred_request
         req_formats = [
@@ -614,8 +620,6 @@ class V20CredManager:
         self,
         cred_ex_record: V20CredExRecord,
         cred_id: str = None,
-        supplements: Sequence[Supplement] = None,
-        attachments: Sequence[AttachDecorator] = None,
     ) -> Tuple[V20CredExRecord, V20CredAck]:
         """
         Store a credential in holder wallet; send ack to issuer.
@@ -645,12 +649,12 @@ class V20CredManager:
                 await cred_format.handler(self.profile).store_credential(
                     cred_ex_record, cred_id
                 )
-                if supplements:
+                if cred_ex_record.supplements and cred_ex_record.attachments:
                     async with self.profile.session() as session:
                         await AttachmentDataRecord.save_attachments(
                             session=session,
-                            supplements=supplements,
-                            attachments=attachments,
+                            supplements=cred_ex_record.supplements,
+                            attachments=cred_ex_record.attachments,
                             cred_id=cred_id,
                         )
                 # TODO: if storing multiple credentials we can't reuse the same id
