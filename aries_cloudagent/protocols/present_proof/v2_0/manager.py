@@ -97,6 +97,8 @@ class V20PresManager:
             state=V20PresExRecord.STATE_PROPOSAL_RECEIVED,
             pres_proposal=message,
             trace=(message._trace is not None),
+            supplements=message.supplements,
+            attachments=message.attachments,
         )
 
         async with self._profile.session() as session:
