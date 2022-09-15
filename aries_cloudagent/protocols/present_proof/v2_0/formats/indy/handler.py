@@ -366,8 +366,8 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
         valid_supplements = True
         indy_proof = pres_ex_record.pres.attachment(IndyPresExchangeHandler.format)
 
-        def find_attachment(attatchment_id: str) -> str:
-            for attachment in pres_ex_record.attach:
+        def find_attachment(attatchment_id: str) -> AttachDecorator:
+            for attachment in pres_ex_record.attachments:
                 if attachment.ident == attatchment_id:
                     return attachment
             return None
@@ -386,7 +386,7 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
                 valid_supplements = False
                 break
 
-            attatchment_id = supplements.ref
+            attatchment_id = supplement.ref
             attachment = find_attachment(attatchment_id)
 
             # No matching attachment found
