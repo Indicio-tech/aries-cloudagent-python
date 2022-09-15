@@ -1,13 +1,15 @@
 """A presentation proposal content message."""
 
 from marshmallow import EXCLUDE, fields, validates_schema, ValidationError
-from typing import Sequence
+from typing import Optional, Sequence
 
 from .....messaging.agent_message import AgentMessage, AgentMessageSchema
 from .....messaging.decorators.attach_decorator import (
     AttachDecorator,
     AttachDecoratorSchema,
 )
+
+from .....protocols.issue_credential.v2_0.messages.inner.supplement import Supplement
 
 from ..message_types import PRES_20_PROPOSAL, PROTOCOL_PACKAGE
 
@@ -35,6 +37,8 @@ class V20PresProposal(AgentMessage):
         comment: str = None,
         formats: Sequence[V20PresFormat] = None,
         proposals_attach: Sequence[AttachDecorator] = None,
+        supplements: Optional[Sequence[Supplement]] = None,
+        attachments: Optional[Sequence[AttachDecorator]] = None,
         **kwargs,
     ):
         """
@@ -49,6 +53,8 @@ class V20PresProposal(AgentMessage):
         self.comment = comment
         self.formats = list(formats) if formats else []
         self.proposals_attach = list(proposals_attach) if proposals_attach else []
+        self.supplements = supplements or []
+        self.attachments = attachments or []
 
     def attachment(self, fmt: V20PresFormat.Format = None) -> dict:
         """
