@@ -70,8 +70,6 @@ class V20CredIssueHandler(BaseHandler):
             try:
                 cred_ex_record = await cred_manager.store_credential(
                     cred_ex_record,
-                    supplement=context.message.supplements,
-                    attachment=context.message.attachments,
                 )
             except (
                 BaseModelError,
