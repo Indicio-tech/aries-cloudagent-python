@@ -2,18 +2,17 @@
 
 from abc import ABC, abstractclassmethod, abstractmethod
 import logging
-
-from typing import Mapping, Tuple
+from typing import Mapping, Sequence, Tuple
 
 from .....core.error import BaseError
 from .....core.profile import Profile
 from .....messaging.decorators.attach_decorator import AttachDecorator
-
 from ..messages.cred_format import V20CredFormat
-from ..messages.cred_proposal import V20CredProposal
-from ..messages.cred_offer import V20CredOffer
-from ..messages.cred_request import V20CredRequest
 from ..messages.cred_issue import V20CredIssue
+from ..messages.cred_offer import V20CredOffer
+from ..messages.cred_proposal import V20CredProposal
+from ..messages.cred_request import V20CredRequest
+from ..messages.inner.supplement import Supplement
 from ..models.cred_ex_record import V20CredExRecord
 
 LOGGER = logging.getLogger(__name__)
@@ -120,3 +119,12 @@ class V20CredFormatHandler(ABC):
         self, cred_ex_record: V20CredExRecord, cred_id: str = None
     ) -> None:
         """Store format specific credential from issue credential message."""
+
+    @abstractmethod
+    async def store_supplements(
+        self,
+        cred_ex_record: V20CredExRecord,
+        supplements: Sequence[Supplement],
+        attachments: Sequence[AttachDecorator],
+    ) -> None:
+        """Store supplements delivered with the credential."""

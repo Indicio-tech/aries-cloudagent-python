@@ -13,8 +13,6 @@ from ....messaging.decorators.attach_decorator import AttachDecorator
 from ....messaging.responder import BaseResponder
 from ....messaging.decorators.attach_decorator import AttachDecorator
 from ....storage.error import StorageError, StorageNotFoundError
-from ....protocols.issue_credential.v2_0.messages.inner.supplement import Supplement
-from ....wallet.models.attachment_data_record import AttachmentDataRecord
 
 from .messages.cred_ack import V20CredAck
 from .messages.cred_format import V20CredFormat
@@ -646,17 +644,14 @@ class V20CredManager:
             cred_format = V20CredFormat.Format.get(format.format)
 
             if cred_format:
-                await cred_format.handler(self.profile).store_credential(
-                    cred_ex_record, cred_id
-                )
+                handler = cred_format.handler(self.profile)
+                await handler.store_credential(cred_ex_record, cred_id)
                 if cred_ex_record.supplements and cred_ex_record.attachments:
-                    async with self.profile.session() as session:
-                        await AttachmentDataRecord.save_attachments(
-                            session=session,
-                            supplements=cred_ex_record.supplements,
-                            attachments=cred_ex_record.attachments,
-                            cred_id=cred_id,
-                        )
+                    await handler.store_supplements(
+                        cred_ex_record,
+                        supplements=cred_ex_record.supplements,
+                        attachments=cred_ex_record.attachments,
+                    )
                 # TODO: if storing multiple credentials we can't reuse the same id
                 cred_id = None
 
