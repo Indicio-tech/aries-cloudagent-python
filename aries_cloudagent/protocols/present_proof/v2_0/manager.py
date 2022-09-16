@@ -2,9 +2,7 @@
 
 import logging
 
-from typing import List, Optional, Tuple
-
-from aries_cloudagent.wallet.models.attachment_data_record import AttachmentDataRecord
+from typing import Optional, Tuple
 
 from ...out_of_band.v1_0.models.oob_record import OobRecord
 from ....connections.models.conn_record import ConnRecord
@@ -264,14 +262,11 @@ class V20PresManager:
             pres_exch_format = V20PresFormat.Format.get(format.format)
 
             if pres_exch_format:
-                supplements_records: List[
-                    AttachmentDataRecord
-                ] = await pres_exch_format.handler(self._profile).get_supplements(
+                handler = pres_exch_format.handler(self._profile)
+                supplements_records = await handler.get_supplements(
                     pres_ex_record, request_data
                 )
-                pres_tuple = await pres_exch_format.handler(self._profile).create_pres(
-                    pres_ex_record, request_data
-                )
+                pres_tuple = await handler.create_pres(pres_ex_record, request_data)
                 if pres_tuple:
                     pres_formats.append(pres_tuple)
                 else:
@@ -344,14 +339,6 @@ class V20PresManager:
         if connection_record:
             pres_ex_record.connection_id = connection_record.connection_id
 
-        if message.supplements:
-            pres_ex_record.supplements = message.supplements
-            message.supplements = None
-
-        if message.attachments:
-            pres_ex_record.attachments = message.attachments
-            message.attachments = None
-
         input_formats = message.formats
 
         for format in input_formats:
@@ -368,6 +355,9 @@ class V20PresManager:
                     )
         pres_ex_record.pres = message
         pres_ex_record.state = V20PresExRecord.STATE_PRESENTATION_RECEIVED
+        pres_ex_record.supplements = message.supplements
+        pres_ex_record.attachments = message.attachments
+
         async with self._profile.session() as session:
             await pres_ex_record.save(session, reason="receive v2.0 presentation")
 

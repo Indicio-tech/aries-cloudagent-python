@@ -1,7 +1,7 @@
 """V2.0 present-proof indy presentation-exchange format handler."""
 import json
 import logging
-from typing import List, Mapping, Tuple
+from typing import List, Mapping, Optional, Tuple
 
 from marshmallow import RAISE
 
@@ -15,6 +15,7 @@ from ......indy.util import generate_pr_nonce
 from ......indy.verifier import IndyVerifier
 from ......messaging.decorators.attach_decorator import AttachDecorator
 from ......messaging.util import canon
+from ......storage.error import StorageNotFoundError
 from ......wallet.models.attachment_data_record import AttachmentDataRecord
 from ......wallet.util import b64_to_bytes
 from .....issue_credential.v2_0.hashlink import Hashlink
@@ -143,7 +144,6 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
                     )
                 )
             except ValueError as err:
-                LOGGER.warning(f"{err}")
                 raise V20PresFormatHandlerError(
                     f"No matching Indy credentials found: {err}"
                 )
@@ -165,8 +165,11 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
         self, pres_ex_record: V20PresExRecord = None, request_data: dict = None
     ) -> List[AttachmentDataRecord]:
         """Retrieve supplements"""
+        if self.format.api not in request_data:
+            return []
 
         if not request_data:
+            # TODO Do this exactly once for this presentation exchange
             try:
                 proof_request = pres_ex_record.pres_request
                 indy_proof_request = proof_request.attachment(
@@ -183,12 +186,13 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
                     "requested_attributes", {}
                 )
             except ValueError as err:
-                LOGGER.warning(f"{err}")
                 raise V20PresFormatHandlerError(
                     f"No matching Indy credentials found: {err}"
                 )
         else:
-            requested_attributes: dict = request_data.get("requested_attributes", {})
+            requested_attributes: dict = request_data[self.format.api].get(
+                "requested_attributes", {}
+            )
 
         indy_pres_request: dict = pres_ex_record.by_format["pres_request"].get(
             V20PresFormat.Format.INDY.api, {}
@@ -210,14 +214,17 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
             else:
                 raise IndyHolderError(f"Unknown presentation request attr: {attr}")
             async with self._profile.session() as session:
-                record: AttachmentDataRecord = (
-                    await AttachmentDataRecord.query_by_cred_id_attribute(
-                        session,
-                        cred_id,
-                        attribute_name,
+                try:
+                    record: AttachmentDataRecord = (
+                        await AttachmentDataRecord.query_by_cred_id_attribute(
+                            session,
+                            cred_id,
+                            attribute_name,
+                        )
                     )
-                )
-                records.append(record)
+                    records.append(record)
+                except StorageNotFoundError:
+                    pass
 
         return records
 
@@ -366,7 +373,7 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
         valid_supplements = True
         indy_proof = pres_ex_record.pres.attachment(IndyPresExchangeHandler.format)
 
-        def find_attachment(attachment_id: str) -> AttachDecorator:
+        def find_attachment(attachment_id: str) -> Optional[AttachDecorator]:
             for attachment in pres_ex_record.attachments:
                 if attachment.ident == attachment_id:
                     return attachment
@@ -377,6 +384,31 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
                 if attr.key == key:
                     return attr.value
             return None
+
+        def _attribute_name_to_encoded(indy_proof: dict, attribute_name: str) -> str:
+            return {
+                name: encoded
+                for subproof in indy_proof["proof"]["proofs"]
+                for name, encoded in subproof["primary_proof"]["eq_proof"][
+                    "revealed_attrs"
+                ].items()
+            }[attribute_name]
+
+        def _encoded_to_raw(indy_proof: dict, encoded: str) -> str:
+            return {
+                revealed["encoded"]: revealed["raw"]
+                for revealed in indy_proof["requested_proof"]["revealed_attrs"].values()
+            }[encoded]
+
+        def _attribute_name_to_raw(
+            indy_proof: dict, attribute_name: str
+        ) -> Optional[str]:
+            try:
+                return _encoded_to_raw(
+                    indy_proof, _attribute_name_to_encoded(indy_proof, attribute_name)
+                )
+            except KeyError:
+                return None
 
         supplements = pres_ex_record.supplements or []
         for supplement in supplements:
@@ -402,9 +434,17 @@ class IndyPresExchangeHandler(V20PresFormatHandler):
 
             # Grab the attr that contains the hashlink
             key = find_supplement_attr(supplement, "field")
+            if not key:
+                raise V20PresFormatHandlerError(
+                    "Supplement attribute not found in credential"
+                )
 
             # Retrieve the hashlink and the associated decoded data
-            hashlink = indy_proof["requested_proof"]["revealed_attrs"][key]["raw"]
+            hashlink = _attribute_name_to_raw(indy_proof, key)
+            if not hashlink:
+                raise V20PresFormatHandlerError(
+                    f"Could not find raw value for attribute {key}"
+                )
             data = b64_to_bytes(data, urlsafe=True)
 
             # Verify the hashlinks
