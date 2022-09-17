@@ -3,15 +3,13 @@ from datetime import datetime
 from typing import cast
 from uuid import uuid4
 
+from asynctest import mock
 import pytest
-from aries_cloudagent.config.injection_context import InjectionContext
-from aries_cloudagent.indy.sdk.profile import IndySdkProfile, IndySdkProfileManager
-from aries_cloudagent.wallet.base import BaseWallet
 
-from aries_cloudagent.wallet.indy import IndySdkWallet
-
+from ....config.injection_context import InjectionContext
 from ....core.event_bus import EventBus
 from ....core.in_memory import InMemoryProfile
+from ....indy.sdk.profile import IndySdkProfile, IndySdkProfileManager
 from ....messaging.decorators.attach_decorator import AttachDecoratorData
 from ....messaging.decorators.attach_decorator import AttachDecorator
 from ....messaging.responder import BaseResponder, MockResponder
@@ -19,17 +17,10 @@ from ....protocols.issue_credential.v2_0.messages.inner.supplement import (
     Supplement,
     SupplementAttribute,
 )
-from ....protocols.issue_credential.v2_0.tests.test_hashlink import (
-    EXAMPLE_DATA,
-    EXAMPLE_LINK,
-)
+from ....protocols.issue_credential.v2_0.tests.test_hashlink import EXAMPLE_DATA
+from ...indy import IndySdkWallet
 from ...models.attachment_data_record import AttachmentDataRecord
-from ..attachment_data_record import (
-    AttachDecorator,
-    AttachmentDataRecord,
-    Supplement,
-)
-from asynctest import mock
+from ..attachment_data_record import AttachDecorator, AttachmentDataRecord, Supplement
 
 
 @pytest.fixture
