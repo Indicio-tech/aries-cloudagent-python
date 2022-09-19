@@ -2,7 +2,7 @@
 
 from json.decoder import JSONDecodeError
 import logging
-from typing import Mapping
+from typing import Mapping, Sequence, Union
 
 from aiohttp import web
 from aiohttp_apispec import (
@@ -52,7 +52,7 @@ from .messages.cred_format import V20CredFormat
 from .messages.cred_problem_report import ProblemReportReason
 from .messages.cred_proposal import V20CredProposal
 from .messages.inner.cred_preview import V20CredPreview, V20CredPreviewSchema
-from .messages.inner.supplement import SupplementSchema
+from .messages.inner.supplement import Supplement, SupplementSchema
 from .models.cred_ex_record import V20CredExRecord, V20CredExRecordSchema
 from .models.detail.indy import V20CredExRecordIndySchema
 from .models.detail.ld_proof import V20CredExRecordLDProofSchema
@@ -881,6 +881,8 @@ async def _create_free_offer(
     auto_remove: bool = False,
     preview_spec: dict = None,
     comment: str = None,
+    supplements: Sequence[Union[Mapping, Supplement]] = None,
+    attachments: Sequence[Union[Mapping, AttachDecorator]] = None,
     trace_msg: bool = None,
 ):
     """Create a credential offer and related exchange record."""
@@ -903,6 +905,8 @@ async def _create_free_offer(
         cred_proposal=cred_proposal.serialize(),
         auto_issue=auto_issue,
         auto_remove=auto_remove,
+        supplements=supplements,
+        attachments=attachments,
         trace=trace_msg,
     )
 
@@ -1022,6 +1026,8 @@ async def credential_exchange_send_free_offer(request: web.BaseRequest):
     auto_remove = body.get("auto_remove")
     comment = body.get("comment")
     preview_spec = body.get("credential_preview")
+    supplements = body.get("supplements")
+    attachments = body.get("attachments")
     trace_msg = body.get("trace")
 
     cred_ex_record = None
@@ -1040,6 +1046,8 @@ async def credential_exchange_send_free_offer(request: web.BaseRequest):
             auto_remove=auto_remove,
             preview_spec=preview_spec,
             comment=comment,
+            supplements=supplements,
+            attachments=attachments,
             trace_msg=trace_msg,
         )
         result = cred_ex_record.serialize()
