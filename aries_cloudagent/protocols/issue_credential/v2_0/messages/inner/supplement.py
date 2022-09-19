@@ -79,6 +79,7 @@ class SupplementSchema(BaseModelSchema):
         required=False,
         example=UUIDFour.EXAMPLE,
         allow_none=False,
+        data_key="@id"
     )
 
     ref = fields.Str(
