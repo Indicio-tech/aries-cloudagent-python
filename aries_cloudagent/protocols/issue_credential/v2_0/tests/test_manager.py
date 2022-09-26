@@ -1136,13 +1136,108 @@ class TestV20CredManager(AsyncTestCase):
             assert ret_cx_rec.cred_issue.attachment() == INDY_CRED
             assert ret_cx_rec.state == V20CredExRecord.STATE_CREDENTIAL_RECEIVED
 
-            # Hit exception where len(handled_formats) = 0
+    async def test_receive_cred_no_formats(self):
+        connection_id = "test_conn_id"
+
+        cred_request = V20CredRequest(
+            formats=[
+                V20CredFormat(
+                    attach_id="0",
+                    format_=ATTACHMENT_FORMAT[CRED_20_REQUEST][
+                        V20CredFormat.Format.INDY.api
+                    ],
+                )
+            ],
+            requests_attach=[AttachDecorator.data_base64(INDY_CRED_REQ, ident="0")],
+        )
+
+        stored_cx_rec = V20CredExRecord(
+            cred_ex_id="dummy-cxid",
+            connection_id=connection_id,
+            initiator=V20CredExRecord.INITIATOR_EXTERNAL,
+            cred_request=cred_request,
+            role=V20CredExRecord.ROLE_ISSUER,
+        )
+
+        cred_issue = V20CredIssue(
+            formats=[
+                V20CredFormat(
+                    attach_id="0",
+                    format_=ATTACHMENT_FORMAT[CRED_20_ISSUE][
+                        V20CredFormat.Format.INDY.api
+                    ],
+                )
+            ],
+            credentials_attach=[AttachDecorator.data_base64(INDY_CRED, ident="0")],
+        )
+
+        with async_mock.patch.object(
+            V20CredExRecord, "save", autospec=True
+        ), async_mock.patch.object(
+            V20CredExRecord,
+            "retrieve_by_conn_and_thread",
+            async_mock.CoroutineMock(),
+        ) as mock_retrieve, async_mock.patch.object(
+            V20CredFormat.Format, "handler"
+        ) as mock_handler:
+
+            mock_handler.return_value.receive_credential = async_mock.CoroutineMock()
+            mock_retrieve.return_value = stored_cx_rec
+
             with pytest.raises(V20CredManagerError):
                 cred_issue.formats = set()
-                ret_cx_rec = await self.manager.receive_credential(
+                await self.manager.receive_credential(
                 cred_issue,
                 connection_id,
                 )
+
+    async def test_receive_cred_extra_formats(self):
+        connection_id = "test_conn_id"
+
+        cred_request = V20CredRequest(
+            formats=[
+                V20CredFormat(
+                    attach_id="0",
+                    format_=ATTACHMENT_FORMAT[CRED_20_REQUEST][
+                        V20CredFormat.Format.INDY.api
+                    ],
+                )
+            ],
+            requests_attach=[AttachDecorator.data_base64(INDY_CRED_REQ, ident="0")],
+        )
+
+        stored_cx_rec = V20CredExRecord(
+            cred_ex_id="dummy-cxid",
+            connection_id=connection_id,
+            initiator=V20CredExRecord.INITIATOR_EXTERNAL,
+            cred_request=cred_request,
+            role=V20CredExRecord.ROLE_ISSUER,
+        )
+
+        cred_issue = V20CredIssue(
+            formats=[
+                V20CredFormat(
+                    attach_id="0",
+                    format_=ATTACHMENT_FORMAT[CRED_20_ISSUE][
+                        V20CredFormat.Format.INDY.api
+                    ],
+                )
+            ],
+            credentials_attach=[AttachDecorator.data_base64(INDY_CRED, ident="0")],
+        )
+
+        with async_mock.patch.object(
+            V20CredExRecord, "save", autospec=True
+        ), async_mock.patch.object(
+            V20CredExRecord,
+            "retrieve_by_conn_and_thread",
+            async_mock.CoroutineMock(),
+        ) as mock_retrieve, async_mock.patch.object(
+            V20CredFormat.Format, "handler"
+        ) as mock_handler:
+
+            mock_handler.return_value.receive_credential = async_mock.CoroutineMock()
+            mock_retrieve.return_value = stored_cx_rec
 
             # Hit exception where we receive formats not present in the request
             with pytest.raises(V20CredManagerError):
@@ -1157,7 +1252,7 @@ class TestV20CredManager(AsyncTestCase):
                     ],
                     credentials_attach=[AttachDecorator.data_base64(INDY_CRED, ident="0")],
                 )
-                ret_cx_rec = await self.manager.receive_credential(
+                await self.manager.receive_credential(
                 cred_issue,
                 connection_id,
                 )
@@ -1290,9 +1385,9 @@ class TestV20CredManager(AsyncTestCase):
 
         with async_mock.patch.object(
             V20CredExRecord, "save", autospec=True
-        ) as mock_save, async_mock.patch.object(
+        ), async_mock.patch.object(
             test_module.V20CredManager, "delete_cred_ex_record", autospec=True
-        ) as mock_delete, async_mock.patch.object(
+        ), async_mock.patch.object(
             V20CredFormat.Format, "handler"
         ) as mock_handler:
 
@@ -1330,11 +1425,12 @@ class TestV20CredManager(AsyncTestCase):
             stored_cx_rec.supplements = supplements
             stored_cx_rec.attachments = attachments
 
-            await self.manager.store_credential(
+            stored_cred = await self.manager.store_credential(
                 stored_cx_rec, cred_id
                 )
+            
+            assert str(stored_cred) == str(stored_cx_rec)
             mock_handler.return_value.store_supplements.assert_called_once()
-
 
     async def test_store_credential_bad_state(self):
         thread_id = "thread-id"
