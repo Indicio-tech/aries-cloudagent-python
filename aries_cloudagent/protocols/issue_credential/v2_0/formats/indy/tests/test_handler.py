@@ -1,7 +1,13 @@
 import asyncio
 from copy import deepcopy
 from time import time
+from uuid import uuid4
 import json
+import base64
+from typing import Sequence
+from unittest.case import _AssertRaisesContext
+from aries_cloudagent.core.profile import Profile
+from aries_cloudagent.protocols.issue_credential.v2_0.messages.inner.supplement import Supplement
 from asynctest import TestCase as AsyncTestCase
 from asynctest import mock as async_mock
 from marshmallow import ValidationError
@@ -19,6 +25,7 @@ from .......multitenant.manager import MultitenantManager
 from .......indy.issuer import IndyIssuer
 from .......cache.in_memory import InMemoryCache
 from .......cache.base import BaseCache
+
 from .......storage.record import StorageRecord
 from .......storage.error import StorageNotFoundError
 from .......messaging.credential_definitions.util import CRED_DEF_SENT_RECORD_TYPE
@@ -41,7 +48,7 @@ from ....message_types import (
     CRED_20_REQUEST,
     CRED_20_ISSUE,
 )
-
+from .......wallet.models.attachment_data_record import AttachmentDataRecord
 from ...handler import LOGGER, V20CredFormatError
 
 from ..handler import IndyCredFormatHandler
@@ -1281,3 +1288,75 @@ class TestV20IndyCredFormatHandler(AsyncTestCase):
             with self.assertRaises(test_module.IndyHolderError) as context:
                 await self.handler.store_credential(stored_cx_rec, cred_id)
             assert "Nope" in str(context.exception)
+
+
+    async def test_store_supplements(self):
+
+        attr_values = {
+            "legalName": "value",
+            "jurisdictionId": "value",
+            "incorporationDate": "value",
+        }
+
+        cred_preview = V20CredPreview(
+            attributes=[
+                V20CredAttrSpec(name=k, value=v) for (k, v) in attr_values.items()
+            ]
+        )
+        cred_offer = V20CredOffer(
+            credential_preview=cred_preview,
+            formats=[
+                V20CredFormat(
+                    attach_id="0",
+                    format_=ATTACHMENT_FORMAT[CRED_20_OFFER][
+                        V20CredFormat.Format.INDY.api
+                    ],
+                )
+            ],
+            offers_attach=[AttachDecorator.data_base64(INDY_OFFER, ident="0")],
+        )
+        cred_request = V20CredRequest(
+            formats=[
+                V20CredFormat(
+                    attach_id="0",
+                    format_=ATTACHMENT_FORMAT[CRED_20_REQUEST][
+                        V20CredFormat.Format.INDY.api
+                    ],
+                )
+            ],
+            requests_attach=[AttachDecorator.data_base64(INDY_CRED_REQ, ident="0")],
+        )
+
+        cred_ex_record = V20CredExRecord(
+            cred_ex_id="dummy-cxid",
+            cred_offer=cred_offer.serialize(),
+            cred_request=cred_request.serialize(),
+            initiator=V20CredExRecord.INITIATOR_SELF,
+            role=V20CredExRecord.ROLE_ISSUER,
+            state=V20CredExRecord.STATE_REQUEST_RECEIVED,
+        )
+        attachment_id = str(uuid4())
+        data = b"Hello World!"
+        supplements = {
+            "type": "hashlink-data",
+            "ref": attachment_id,
+            "attrs": [{"key": "field", "value": "image"}],
+        }
+        attachments = {
+            "@id": attachment_id,
+            "mime-type": "image/jpeg",
+            "filename": "face.png",
+            "byte_count": len(data),
+            "description": "A picture of a face",
+            "data": {"base64": base64.urlsafe_b64encode(data).decode()},
+        }
+
+        with async_mock.patch.object(
+            self.handler, "get_detail_record", autospec=True
+        ), async_mock.patch.object(
+            test_module.AttachmentDataRecord, "save_attachments", async_mock.CoroutineMock()
+        ):
+            await self.handler.store_supplements(
+                cred_ex_record=cred_ex_record, 
+                supplements=supplements, 
+                attachments=attachments)

@@ -1679,7 +1679,7 @@ async def create_hashlink(request: web.BaseRequest):
 
     body = await request.json()
     body["data"] = b64_to_bytes(body["data"], urlsafe=True)
-    link = Hashlink(**body)
+    link = Hashlink(**body).link
     return web.json_response({"result": link})
 
 

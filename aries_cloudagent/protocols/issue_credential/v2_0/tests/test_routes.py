@@ -1,4 +1,6 @@
 from asynctest import TestCase as AsyncTestCase, mock as async_mock
+import pytest
+from json.decoder import JSONDecodeError
 
 from . import LD_PROOF_VC_DETAIL, TEST_DID
 from .. import routes as test_module
@@ -1000,6 +1002,9 @@ class TestV20CredRoutes(AsyncTestCase):
 
             mock_response.assert_called_once_with(mock_cx_rec.serialize.return_value)
 
+            # with pytest.raises(JSONDecodeError):
+
+
     async def test_credential_exchange_send_request_bad_cred_ex_id(self):
         self.request.json = async_mock.CoroutineMock()
         self.request.match_info = {"cred_ex_id": "dummy"}
@@ -1741,8 +1746,11 @@ class TestV20CredRoutes(AsyncTestCase):
                 },
             }
         )
-        result = await test_module.create_hashlink(self.request)
-        assert result == {"result": EXAMPLE_LINK}
+        with async_mock.patch.object(
+                test_module.web, "json_response"
+            ) as mock_response:
+            await test_module.create_hashlink(self.request)
+            mock_response.assert_called_once_with({"result": EXAMPLE_LINK})
 
     async def test_register(self):
         mock_app = async_mock.MagicMock()
