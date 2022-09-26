@@ -1,6 +1,5 @@
 from asynctest import TestCase as AsyncTestCase, mock as async_mock
 import pytest
-from json.decoder import JSONDecodeError
 
 from . import LD_PROOF_VC_DETAIL, TEST_DID
 from .. import routes as test_module
@@ -1001,9 +1000,6 @@ class TestV20CredRoutes(AsyncTestCase):
             await test_module.credential_exchange_send_bound_request(self.request)
 
             mock_response.assert_called_once_with(mock_cx_rec.serialize.return_value)
-
-            # with pytest.raises(JSONDecodeError):
-
 
     async def test_credential_exchange_send_request_bad_cred_ex_id(self):
         self.request.json = async_mock.CoroutineMock()

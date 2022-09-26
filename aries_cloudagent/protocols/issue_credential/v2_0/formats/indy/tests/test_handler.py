@@ -1355,8 +1355,19 @@ class TestV20IndyCredFormatHandler(AsyncTestCase):
             self.handler, "get_detail_record", autospec=True
         ), async_mock.patch.object(
             test_module.AttachmentDataRecord, "save_attachments", async_mock.CoroutineMock()
-        ):
+        ) as mock_save_attachments:
+
             await self.handler.store_supplements(
                 cred_ex_record=cred_ex_record, 
                 supplements=supplements, 
-                attachments=attachments)
+                attachments=attachments
+            )
+
+            mock_save_attachments.assert_called_once_with(
+                session=self.session,
+                supplements=supplements,
+                attachments=attachments,
+                cred_id=(
+                    await self.handler.get_detail_record(cred_ex_record.cred_ex_id)
+                    ).cred_id_stored
+            )
