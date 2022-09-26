@@ -1,6 +1,9 @@
 import json
 
 from asynctest import TestCase as AsyncTestCase, mock as async_mock
+import pytest 
+from uuid import uuid4
+import base64
 
 from . import (
     CRED_DEF,
@@ -45,6 +48,7 @@ from ..messages.cred_request import V20CredRequest
 from ..messages.inner.cred_preview import V20CredAttrSpec, V20CredPreview
 from ..messages.inner.supplement import Supplement, SupplementAttribute
 from ..models.cred_ex_record import V20CredExRecord
+from .....protocols.issue_credential.v2_0.formats.indy.handler import V20CredFormatHandler
 
 CRED_REQ = V20CredRequest(
     comment="Test",
@@ -1125,12 +1129,38 @@ class TestV20CredManager(AsyncTestCase):
                 cred_issue._thread_id,
                 role=V20CredExRecord.ROLE_HOLDER,
             )
-            mock_save.assert_called_once()
+            mock_save.assert_called()
             mock_handler.return_value.receive_credential.assert_called_once_with(
                 ret_cx_rec, cred_issue
             )
             assert ret_cx_rec.cred_issue.attachment() == INDY_CRED
             assert ret_cx_rec.state == V20CredExRecord.STATE_CREDENTIAL_RECEIVED
+
+            # Hit exception where len(handled_formats) = 0
+            with pytest.raises(V20CredManagerError):
+                cred_issue.formats = set()
+                ret_cx_rec = await self.manager.receive_credential(
+                cred_issue,
+                connection_id,
+                )
+
+            # Hit exception where we receive formats not present in the request
+            with pytest.raises(V20CredManagerError):
+                cred_issue = V20CredIssue(
+                    formats=[
+                        V20CredFormat(
+                            attach_id="0",
+                            format_=ATTACHMENT_FORMAT[CRED_20_ISSUE][
+                                V20CredFormat.Format.LD_PROOF.api
+                            ],
+                        )
+                    ],
+                    credentials_attach=[AttachDecorator.data_base64(INDY_CRED, ident="0")],
+                )
+                ret_cx_rec = await self.manager.receive_credential(
+                cred_issue,
+                connection_id,
+                )
 
     async def test_receive_cred_x_extra_formats(self):
         connection_id = "test_conn_id"
@@ -1177,7 +1207,10 @@ class TestV20CredManager(AsyncTestCase):
             V20CredExRecord,
             "retrieve_by_conn_and_thread",
             async_mock.CoroutineMock(),
-        ) as mock_retrieve:
+        ) as mock_retrieve, async_mock.patch.object(
+            V20CredExRecord,
+            "save",
+            async_mock.CoroutineMock()):
             mock_retrieve.return_value = stored_cx_rec
 
             with self.assertRaises(V20CredManagerError) as context:
@@ -1215,7 +1248,10 @@ class TestV20CredManager(AsyncTestCase):
             V20CredExRecord,
             "retrieve_by_conn_and_thread",
             async_mock.CoroutineMock(),
-        ) as mock_retrieve:
+        ) as mock_retrieve, async_mock.patch.object(
+            V20CredExRecord,
+            "save",
+            async_mock.CoroutineMock()):
             mock_retrieve.return_value = stored_cx_rec
 
             with self.assertRaises(V20CredManagerError) as context:
@@ -1261,6 +1297,7 @@ class TestV20CredManager(AsyncTestCase):
         ) as mock_handler:
 
             mock_handler.return_value.store_credential = async_mock.CoroutineMock()
+            mock_handler.return_value.store_supplements = async_mock.CoroutineMock()
 
             ret_cx_rec = await self.manager.store_credential(
                 stored_cx_rec, cred_id=cred_id
@@ -1272,6 +1309,32 @@ class TestV20CredManager(AsyncTestCase):
 
             assert ret_cx_rec.cred_issue.attachment() == INDY_CRED
             assert ret_cx_rec.state == V20CredExRecord.STATE_CREDENTIAL_RECEIVED
+
+
+            attachment_id = str(uuid4())
+            data = b"Hello World!"
+            supplements = {
+                "type": "hashlink-data",
+                "ref": attachment_id,
+                "attrs": [{"key": "field", "value": "image"}],
+            }
+            attachments = {
+                "@id": attachment_id,
+                "mime-type": "image/jpeg",
+                "filename": "face.png",
+                "byte_count": len(data),
+                "description": "A picture of a face",
+                "data": {"base64": base64.urlsafe_b64encode(data).decode()},
+            }
+
+            stored_cx_rec.supplements = supplements
+            stored_cx_rec.attachments = attachments
+
+            await self.manager.store_credential(
+                stored_cx_rec, cred_id
+                )
+            mock_handler.return_value.store_supplements.assert_called_once()
+
 
     async def test_store_credential_bad_state(self):
         thread_id = "thread-id"
