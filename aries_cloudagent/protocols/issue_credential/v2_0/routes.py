@@ -284,6 +284,18 @@ class V20CredRequestFreeSchema(AdminAPIMessageTracingSchema):
         allow_none=True,
         example="did:key:ahsdkjahsdkjhaskjdhakjshdkajhsdkjahs",
     )
+    supplements = fields.Nested(
+        SupplementSchema,
+        description="Supplements to the credential",
+        many=True,
+        required=False,
+    )
+    attachments = fields.Nested(
+        AttachDecoratorSchema,
+        many=True,
+        required=False,
+        description="Attachments of other data associated with the credential",
+    )
 
 
 class V20CredExFreeSchema(V20IssueCredSchemaCore):
@@ -624,6 +636,8 @@ async def credential_exchange_create(request: web.BaseRequest):
     comment = body.get("comment")
     preview_spec = body.get("credential_preview")
     filt_spec = body.get("filter")
+    supplements = body.get("supplements")
+    attachments = body.get("attachments")
     auto_remove = body.get("auto_remove")
     if not filt_spec:
         raise web.HTTPBadRequest(reason="Missing filter")
@@ -655,6 +669,8 @@ async def credential_exchange_create(request: web.BaseRequest):
             connection_id=None,
             cred_proposal=cred_proposal,
             auto_remove=auto_remove,
+            supplements=supplements,
+            attachments=attachments,
         )
     except (StorageError, BaseModelError) as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
@@ -811,6 +827,8 @@ async def credential_exchange_send_proposal(request: web.BaseRequest):
     connection_id = body.get("connection_id")
     comment = body.get("comment")
     preview_spec = body.get("credential_preview")
+    supplements = body.get("supplements")
+    attachments = body.get("attachments")
     filt_spec = body.get("filter")
     if not filt_spec:
         raise web.HTTPBadRequest(reason="Missing filter")
@@ -839,6 +857,8 @@ async def credential_exchange_send_proposal(request: web.BaseRequest):
                 V20CredFormat.Format.get(fmt_api): filt_by_fmt
                 for (fmt_api, filt_by_fmt) in filt_spec.items()
             },
+            supplements=supplements,
+            attachments=attachments,
         )
 
         cred_proposal_message = cred_ex_record.cred_proposal
@@ -951,6 +971,8 @@ async def credential_exchange_create_free_offer(request: web.BaseRequest):
     filt_spec = body.get("filter")
     if not filt_spec:
         raise web.HTTPBadRequest(reason="Missing filter")
+    supplements = body.get("supplements")
+    attachments = body.get("attachments")
     trace_msg = body.get("trace")
     cred_ex_record = None
     try:
@@ -961,6 +983,8 @@ async def credential_exchange_create_free_offer(request: web.BaseRequest):
             auto_remove=auto_remove,
             preview_spec=preview_spec,
             comment=comment,
+            supplements=supplements,
+            attachments=attachments,
             trace_msg=trace_msg,
         )
         result = cred_ex_record.serialize()
@@ -1222,6 +1246,8 @@ async def credential_exchange_send_free_request(request: web.BaseRequest):
         raise web.HTTPBadRequest(reason="Missing filter")
     auto_remove = body.get("auto_remove")
     trace_msg = body.get("trace")
+    supplements = body.get("supplements")
+    attachments = body.get("attachments")
     holder_did = body.get("holder_did")
 
     conn_record = None
@@ -1249,6 +1275,8 @@ async def credential_exchange_send_free_request(request: web.BaseRequest):
             initiator=V20CredExRecord.INITIATOR_SELF,
             role=V20CredExRecord.ROLE_HOLDER,
             trace=trace_msg,
+            supplements=supplements,
+            attachments=attachments,
         )
 
         cred_ex_record, cred_request_message = await cred_manager.create_request(
