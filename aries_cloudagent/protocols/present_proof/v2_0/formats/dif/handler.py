@@ -22,6 +22,7 @@ from ......vc.ld_proofs import (
 from ......vc.vc_ld.verify import verify_presentation
 from ......wallet.base import BaseWallet
 from ......wallet.key_type import KeyType
+from ......protocols.issue_credential.v2_0.messages.inner.supplement import Supplement
 
 from .....problem_report.v1_0.message import ProblemReport
 
@@ -397,6 +398,12 @@ class DIFPresFormatHandler(V20PresFormatHandler):
                     report, connection_id=pres_ex_record.connection_id
                 )
 
+    async def get_supplements(
+        self, pres_ex_record: V20PresExRecord, request_data: dict = None
+    ) -> Sequence[Supplement]:
+        """Retrieve supplements"""
+        raise NotImplementedError("Method not implemented for DIF format")
+
     async def process_vcrecords_return_list(
         self, vc_records: Sequence[VCRecord], record_ids: set
     ) -> Tuple[Sequence[VCRecord], set]:
@@ -450,6 +457,10 @@ class DIFPresFormatHandler(V20PresFormatHandler):
                     report, connection_id=pres_ex_record.connection_id
                 )
                 return False
+
+    async def verify_supplements(self, pres_ex_record: V20PresExRecord) -> bool:
+        """Verify the supplements associated with a presentation."""
+        raise NotImplementedError("Method not implemented for DIF format")
 
     async def verify_pres(self, pres_ex_record: V20PresExRecord) -> V20PresExRecord:
         """

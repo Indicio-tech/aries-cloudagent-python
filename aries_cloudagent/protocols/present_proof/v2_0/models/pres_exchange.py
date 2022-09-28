@@ -2,14 +2,22 @@
 
 import logging
 
-from typing import Any, Mapping, Union
+from typing import Any, Mapping, Union, Sequence
 
 from marshmallow import fields, Schema, validate
 
 from .....core.profile import ProfileSession
 from .....messaging.models.base_record import BaseExchangeRecord, BaseExchangeSchema
 from .....messaging.valid import UUIDFour
+from .....messaging.decorators.attach_decorator import (
+    AttachDecoratorSchema,
+    AttachDecorator,
+)
 from .....storage.base import StorageError
+from ....issue_credential.v2_0.messages.inner.supplement import (
+    SupplementSchema,
+    Supplement,
+)
 
 from ..messages.pres import V20Pres, V20PresSchema
 from ..messages.pres_format import V20PresFormat
@@ -67,6 +75,8 @@ class V20PresExRecord(BaseExchangeRecord):
         error_msg: str = None,
         trace: bool = False,  # backward compat: BaseRecord.FromStorage()
         by_format: Mapping = None,  # backward compat: BaseRecord.FromStorage()
+        supplements: Sequence[Union[Mapping, Supplement]] = None,
+        attachments: Sequence[Union[Mapping, AttachDecorator]] = None,
         **kwargs,
     ):
         """Initialize a new PresExRecord."""
@@ -83,6 +93,12 @@ class V20PresExRecord(BaseExchangeRecord):
         self.auto_present = auto_present
         self.auto_verify = auto_verify
         self.error_msg = error_msg
+        self.supplements = [
+            Supplement.serde(supplement).de for supplement in supplements or []
+        ]
+        self.attachments = [
+            AttachDecorator.serde(attachment).de for attachment in attachments or []
+        ]
 
     @property
     def pres_ex_id(self) -> str:
@@ -171,10 +187,7 @@ class V20PresExRecord(BaseExchangeRecord):
 
         try:
             await self.save(
-                session,
-                reason=reason,
-                log_params=log_params,
-                log_override=log_override,
+                session, reason=reason, log_params=log_params, log_override=log_override
             )
         except StorageError as err:
             LOGGER.exception(err)
@@ -199,12 +212,16 @@ class V20PresExRecord(BaseExchangeRecord):
             },
             **{
                 prop: getattr(self, f"_{prop}").ser
-                for prop in (
-                    "pres_proposal",
-                    "pres_request",
-                    "pres",
-                )
+                for prop in ("pres_proposal", "pres_request", "pres")
                 if getattr(self, prop) is not None
+            },
+            **{
+                prop: [item.serialize() for item in getattr(self, prop)]
+                for prop in (
+                    "supplements",
+                    "attachments",
+                )
+                if getattr(self, prop)
             },
         }
 
@@ -282,9 +299,7 @@ class V20PresExRecordSchema(BaseExchangeSchema):
         description="Presentation request message",
     )
     pres = fields.Nested(
-        V20PresSchema(),
-        required=False,
-        description="Presentation message",
+        V20PresSchema(), required=False, description="Presentation message"
     )
     by_format = fields.Nested(
         Schema.from_dict(
@@ -317,4 +332,16 @@ class V20PresExRecordSchema(BaseExchangeSchema):
     )
     error_msg = fields.Str(
         required=False, description="Error message", example="Invalid structure"
+    )
+    supplements = fields.Nested(
+        SupplementSchema(),
+        required=False,
+        many=True,
+        description="Supplementary attachment data",
+    )
+    attachments = fields.Nested(
+        AttachDecoratorSchema(),
+        required=False,
+        many=True,
+        description="File attachments",
     )
