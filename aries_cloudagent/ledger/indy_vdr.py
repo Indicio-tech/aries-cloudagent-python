@@ -14,7 +14,7 @@ from pathlib import Path
 from time import time
 from typing import Sequence, Tuple, Union, Optional
 
-from indy_vdr import ledger, open_pool, Pool, Request, VdrError
+from indy_vdr import ledger, open_pool, Pool, Request, set_config, VdrError
 
 from ..cache.base import BaseCache
 from ..core.profile import Profile
@@ -106,6 +106,19 @@ class IndyVdrLedgerPool:
         self.taa_cache: str = None
         self.read_only: bool = read_only
         self.socks_proxy: str = socks_proxy
+
+        config = {
+            'freshness_threshold': 300,
+            'ack_timeout': 120,
+            'reply_timeout': 120,
+            'conn_request_limit': 5,
+            'conn_active_timeout': 120,
+            'request_read_nodes': 2,
+        }
+        LOGGER.debug(
+            "Setting Timeouts...",
+        )
+        set_config(config)
 
     @property
     def cfg_path(self) -> Path:
