@@ -23,6 +23,8 @@ from .....messaging.responder import BaseResponder, MockResponder
 from .....multitenant.base import BaseMultitenantManager
 from .....multitenant.manager import MultitenantManager
 from .....storage.error import StorageNotFoundError
+from .....protocols.issue_credential.v2_0.messages.inner.supplement import Supplement
+from .....wallet.models.attachment_data_record import AttachmentDataRecord
 
 from ...indy import pres_exch_handler as test_indy_util_module
 
@@ -663,21 +665,48 @@ class TestV20PresManager(AsyncTestCase):
                 request_presentations_attach=[
                     AttachDecorator.data_json(DIF_PRES_REQ, ident="dif")
                 ],
-            ).serialize(),
+            ).serialize()
+        )
+        with async_mock.patch.object(
+            DIFPresFormatHandler, "create_pres", autospec=True
+        ) as mock_create_pres, async_mock.patch.object(
+            DIFPresFormatHandler, "get_supplements"
+        ) as mock_get_supplements:
+            mock_create_pres.return_value = None
+            mock_get_supplements.return_value = []
+            with self.assertRaises(V20PresManagerError) as context:
+                await self.manager.create_pres(
+                    pres_ex_record=px_rec, request_data={}, comment="test"
+                )
+            assert "Unable to create presentation. ProblemReport message sent" in str(
+                context.exception
+            )
+
+    async def test_create_pres_catch_dif_not_implemented_error(self):
+        px_rec = V20PresExRecord(
+            pres_request=V20PresRequest(
+                formats=[
+                    V20PresFormat(
+                        attach_id="dif",
+                        format_=ATTACHMENT_FORMAT[PRES_20_REQUEST][
+                            V20PresFormat.Format.DIF.api
+                        ],
+                    )
+                ],
+                request_presentations_attach=[
+                    AttachDecorator.data_json(DIF_PRES_REQ, ident="dif")
+                ],
+            ).serialize()
         )
         with async_mock.patch.object(
             DIFPresFormatHandler, "create_pres", autospec=True
         ) as mock_create_pres:
             mock_create_pres.return_value = None
-            with self.assertRaises(V20PresManagerError) as context:
+            with self.assertRaises(NotImplementedError) as context:
                 await self.manager.create_pres(
-                    pres_ex_record=px_rec,
-                    request_data={},
-                    comment="test",
+                    pres_ex_record=px_rec, request_data={}, comment="test"
                 )
-            assert "Unable to create presentation. ProblemReport message sent" in str(
-                context.exception
-            )
+            assert "Method not implemented for DIF format" in str(context.exception)
 
     async def test_receive_pres_catch_diferror(self):
         connection_record = async_mock.MagicMock(connection_id=CONN_ID)
@@ -973,10 +1002,13 @@ class TestV20PresManager(AsyncTestCase):
             test_indy_handler, "AttachDecorator", autospec=True
         ) as mock_attach_decorator, async_mock.patch.object(
             test_indy_util_module.LOGGER, "info", async_mock.MagicMock()
-        ) as mock_log_info:
+        ) as mock_log_info, async_mock.patch.object(
+            test_indy_handler.IndyPresExchangeHandler, "get_supplements"
+        ) as mock_get_supplements:
             mock_attach_decorator.data_base64 = async_mock.MagicMock(
                 return_value=mock_attach_decorator
             )
+            mock_get_supplements.return_value = []
 
             req_creds = await indy_proof_req_preview2indy_requested_creds(
                 INDY_PROOF_REQ_NAME, preview=None, holder=self.holder
@@ -1071,7 +1103,9 @@ class TestV20PresManager(AsyncTestCase):
             test_indy_util_module, "RevocationRegistry", autospec=True
         ) as mock_rr, async_mock.patch.object(
             test_indy_util_module.LOGGER, "error", async_mock.MagicMock()
-        ) as mock_log_error:
+        ) as mock_log_error, async_mock.patch.object(
+            AttachmentDataRecord, "query_by_cred_id_attribute"
+        ):
             mock_rr.from_definition = async_mock.MagicMock(return_value=more_magic_rr)
 
             mock_attach_decorator.data_base64 = async_mock.MagicMock(
@@ -2052,6 +2086,14 @@ class TestV20PresManager(AsyncTestCase):
             pres_request=pres_request,
             pres=pres,
         )
+        px_rec_in.supplements = [
+            Supplement(
+                type="hashlink_data",
+                attrs=[{"key": "field", "value": "<fieldname>"}],
+                ref=None,
+                id="attachment_id",
+            )
+        ]
         self.profile.context.injector.bind_instance(
             BaseMultitenantManager,
             async_mock.MagicMock(MultitenantManager, autospec=True),

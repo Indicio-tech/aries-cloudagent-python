@@ -2,13 +2,16 @@
 
 import logging
 
-from typing import Mapping, Optional, Tuple
+from typing import Mapping, Optional, Sequence, Tuple, Union
+
 
 from ....connections.models.conn_record import ConnRecord
 from ....core.oob_processor import OobRecord
 from ....core.error import BaseError
 from ....core.profile import Profile
+from ....messaging.decorators.attach_decorator import AttachDecorator
 from ....messaging.responder import BaseResponder
+from ....messaging.decorators.attach_decorator import AttachDecorator
 from ....storage.error import StorageError, StorageNotFoundError
 
 from .messages.cred_ack import V20CredAck
@@ -19,6 +22,7 @@ from .messages.cred_problem_report import V20CredProblemReport, ProblemReportRea
 from .messages.cred_proposal import V20CredProposal
 from .messages.cred_request import V20CredRequest
 from .messages.inner.cred_preview import V20CredPreview
+from .messages.inner.supplement import Supplement
 from .models.cred_ex_record import V20CredExRecord
 
 LOGGER = logging.getLogger(__name__)
@@ -56,6 +60,8 @@ class V20CredManager:
         connection_id: str,
         cred_proposal: V20CredProposal,
         auto_remove: bool = None,
+        supplements: Sequence[Union[Mapping, Supplement]] = None,
+        attachments: Sequence[Union[Mapping, AttachDecorator]] = None,
     ) -> Tuple[V20CredExRecord, V20CredOffer]:
         """
         Set up a new credential exchange record for an automated send.
@@ -79,6 +85,8 @@ class V20CredManager:
             auto_issue=True,
             auto_remove=auto_remove,
             trace=(cred_proposal._trace is not None),
+            supplements=supplements,
+            attachments=attachments,
         )
         (cred_ex_record, cred_offer) = await self.create_offer(
             cred_ex_record=cred_ex_record,
@@ -522,6 +530,8 @@ class V20CredManager:
             comment=comment,
             formats=[format for (format, _) in issue_formats],
             credentials_attach=[attach for (_, attach) in issue_formats],
+            supplements=cred_ex_record.supplements or None,
+            attachments=cred_ex_record.attachments or None,
         )
 
         cred_ex_record.state = V20CredExRecord.STATE_ISSUED
@@ -561,6 +571,12 @@ class V20CredManager:
                     role=V20CredExRecord.ROLE_HOLDER,
                 )
             )
+            cred_ex_record.supplements = cred_issue_message.supplements
+            cred_ex_record.attachments = cred_issue_message.attachments
+            await cred_ex_record.save(
+                session,
+                reason="Save credential exchange record with supplements and attachments",
+            )
 
         cred_request_message = cred_ex_record.cred_request
         req_formats = [
@@ -599,7 +615,9 @@ class V20CredManager:
         return cred_ex_record
 
     async def store_credential(
-        self, cred_ex_record: V20CredExRecord, cred_id: str = None
+        self,
+        cred_ex_record: V20CredExRecord,
+        cred_id: str = None,
     ) -> Tuple[V20CredExRecord, V20CredAck]:
         """
         Store a credential in holder wallet; send ack to issuer.
@@ -607,6 +625,8 @@ class V20CredManager:
         Args:
             cred_ex_record: credential exchange record with credential to store and ack
             cred_id: optional credential identifier to override default on storage
+            supplements: supplements to the credential
+            attachments: attachments of other data associated with the credential
 
         Returns:
             Updated credential exchange record
@@ -624,9 +644,14 @@ class V20CredManager:
             cred_format = V20CredFormat.Format.get(format.format)
 
             if cred_format:
-                await cred_format.handler(self.profile).store_credential(
-                    cred_ex_record, cred_id
-                )
+                handler = cred_format.handler(self.profile)
+                await handler.store_credential(cred_ex_record, cred_id)
+                if cred_ex_record.supplements and cred_ex_record.attachments:
+                    await handler.store_supplements(
+                        cred_ex_record,
+                        supplements=cred_ex_record.supplements,
+                        attachments=cred_ex_record.attachments,
+                    )
                 # TODO: if storing multiple credentials we can't reuse the same id
                 cred_id = None
 

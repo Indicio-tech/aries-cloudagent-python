@@ -1,18 +1,18 @@
 """V2.0 issue-credential indy credential format handler."""
 
+import asyncio
+import json
 import logging
+from typing import Mapping, Sequence, Tuple
 
 from marshmallow import RAISE
-import json
-from typing import Mapping, Tuple
-import asyncio
 
 from ......cache.base import BaseCache
-from ......indy.issuer import IndyIssuer, IndyIssuerRevocationRegistryFullError
 from ......indy.holder import IndyHolder, IndyHolderError
+from ......indy.issuer import IndyIssuer, IndyIssuerRevocationRegistryFullError
 from ......indy.models.cred import IndyCredentialSchema
-from ......indy.models.cred_request import IndyCredRequestSchema
 from ......indy.models.cred_abstract import IndyCredAbstractSchema
+from ......indy.models.cred_request import IndyCredRequestSchema
 from ......ledger.base import BaseLedger
 from ......ledger.multiple_ledger.ledger_requests_executor import (
     GET_CRED_DEF,
@@ -33,6 +33,7 @@ from ......storage.base import BaseStorage
 from ......storage.error import StorageNotFoundError
 
 
+from ......wallet.models.attachment_data_record import AttachmentDataRecord
 from ...message_types import (
     ATTACHMENT_FORMAT,
     CRED_20_ISSUE,
@@ -41,13 +42,13 @@ from ...message_types import (
     CRED_20_REQUEST,
 )
 from ...messages.cred_format import V20CredFormat
-from ...messages.cred_proposal import V20CredProposal
-from ...messages.cred_offer import V20CredOffer
-from ...messages.cred_request import V20CredRequest
 from ...messages.cred_issue import V20CredIssue
+from ...messages.cred_offer import V20CredOffer
+from ...messages.cred_proposal import V20CredProposal
+from ...messages.cred_request import V20CredRequest
+from ...messages.inner.supplement import Supplement
 from ...models.cred_ex_record import V20CredExRecord
 from ...models.detail.indy import V20CredExRecordIndy
-
 from ..handler import CredFormatAttachment, V20CredFormatError, V20CredFormatHandler
 
 LOGGER = logging.getLogger(__name__)
@@ -541,3 +542,19 @@ class IndyCredFormatHandler(V20CredFormatHandler):
         except IndyHolderError as e:
             LOGGER.error(f"Error storing credential: {e.error_code} - {e.message}")
             raise e
+
+    async def store_supplements(
+        self,
+        cred_ex_record: V20CredExRecord,
+        supplements: Sequence[Supplement],
+        attachments: Sequence[AttachDecorator],
+    ) -> None:
+        """Store supplements delivered with the credential."""
+        detail = await self.get_detail_record(cred_ex_record.cred_ex_id)
+        async with self.profile.session() as session:
+            await AttachmentDataRecord.save_attachments(
+                session=session,
+                supplements=supplements,
+                attachments=attachments,
+                cred_id=detail.cred_id_stored,
+            )
