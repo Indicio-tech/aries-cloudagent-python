@@ -1132,6 +1132,18 @@ async def credential_exchange_send_bound_offer(request: web.BaseRequest):
     outbound_handler = request["outbound_message_router"]
 
     body = await request.json() if request.body_exists else {}
+    print(body)
+    if body:
+        supplements = body.get("supplements")
+        attachments = body.get("attachments")
+
+        supplements = [
+            Supplement.deserialize(supplement) for supplement in supplements or []
+        ]
+        attachments = [
+            AttachDecorator.deserialize(attachment) for attachment in attachments or []
+        ]
+
     filt_spec = body.get("filter")
     preview_spec = body.get("counter_preview")
 
@@ -1145,6 +1157,9 @@ async def credential_exchange_send_bound_offer(request: web.BaseRequest):
                     session,
                     cred_ex_id,
                 )
+                cred_ex_record.supplements = supplements
+                cred_ex_record.attachments = attachments
+
             except StorageNotFoundError as err:
                 raise web.HTTPNotFound(reason=err.roll_up) from err
 
