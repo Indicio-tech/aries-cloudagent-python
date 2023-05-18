@@ -3,16 +3,12 @@
 from functools import total_ordering
 import json
 import logging
-from os.path import join
 from pathlib import Path
-from shutil import move
 from typing import Any, Mapping, Optional, Sequence, Tuple, Union
 from urllib.parse import urlparse
-import uuid
 
 from marshmallow import fields, validate
 
-from ...anoncreds.issuer import AnonCredsIssuer, AnonCredsIssuerError
 from ...anoncreds.models.anoncreds_revocation import (
     RevRegDef,
     RevRegDefSchema,
@@ -21,7 +17,6 @@ from ...anoncreds.models.anoncreds_revocation import (
     RevListSchema,
 )
 from ...anoncreds.registry import AnonCredsRegistry
-from ...anoncreds.util import indy_client_dir
 from ...core.profile import Profile, ProfileSession
 from ...ledger.base import BaseLedger
 from ...ledger.error import LedgerError
@@ -165,97 +160,6 @@ class IssuerRevRegRecord(BaseRecord):
         if not (parsed.scheme and parsed.netloc and parsed.path):
             raise RevocationError("URI {} is not a valid URL".format(url))
 
-    async def create_and_register_def(self, profile: Profile):
-        """Create the revocation registry definition and tails file and publish it."""
-        if not self.tag:
-            self.tag = self._id or str(uuid.uuid4())
-
-        if self.state != IssuerRevRegRecord.STATE_INIT:
-            raise RevocationError(
-                "Revocation registry {} in state {}: cannot generate".format(
-                    self.revoc_reg_id, self.state
-                )
-            )
-
-        issuer = AnonCredsIssuer(profile)
-
-        LOGGER.debug("Creating revocation registry with size: %d", self.max_cred_num)
-
-        try:
-            result = await issuer.create_and_register_revocation_registry_definition(
-                self.issuer_id,
-                self.cred_def_id,
-                self.revoc_def_type,
-                self.tag,
-                self.max_cred_num,
-                self.options,
-            )
-        except AnonCredsIssuerError as err:
-            raise RevocationError() from err
-
-        self.revoc_reg_id = result.rev_reg_def_id
-        self.revoc_reg_def = result.rev_reg_def.serialize()
-        self.state = IssuerRevRegRecord.STATE_POSTED
-        self.tails_hash = result.rev_reg_def.value.tails_hash
-        self.tails_public_uri = result.rev_reg_def.value.tails_location
-        self.tails_local_path = issuer.get_local_tails_path(result.rev_reg_def)
-
-        async with profile.session() as session:
-            await self.save(session, reason="Generated registry")
-
-        return result
-
-    # TODO Delete me; replaced by create_and_register_def
-    async def generate_registry(self, profile: Profile):
-        """Create the revocation registry definition and tails file."""
-        if not self.tag:
-            self.tag = self._id or str(uuid.uuid4())
-
-        if self.state != IssuerRevRegRecord.STATE_INIT:
-            raise RevocationError(
-                "Revocation registry {} in state {}: cannot generate".format(
-                    self.revoc_reg_id, self.state
-                )
-            )
-
-        issuer = AnonCredsIssuer(profile)
-
-        tails_hopper_dir = indy_client_dir(join("tails", ".hopper"), create=True)
-
-        LOGGER.debug("Creating revocation registry with size: %d", self.max_cred_num)
-
-        try:
-            (
-                revoc_reg_id,
-                revoc_reg_def_json,
-                revoc_reg_entry_json,
-            ) = await issuer.create_and_store_revocation_registry(
-                self.issuer_id,
-                self.cred_def_id,
-                self.revoc_def_type,
-                self.tag,
-                self.max_cred_num,
-                tails_hopper_dir,
-            )
-        except AnonCredsIssuerError as err:
-            raise RevocationError() from err
-
-        if self.revoc_reg_id and revoc_reg_id != self.revoc_reg_id:
-            raise RevocationError("Generated registry ID does not match assigned value")
-        self.revoc_reg_id = revoc_reg_id
-        self.revoc_reg_def = json.loads(revoc_reg_def_json)
-        self.revoc_reg_entry = json.loads(revoc_reg_entry_json)
-        self.state = IssuerRevRegRecord.STATE_GENERATED
-        self.tails_hash = self.revoc_reg_def.value.tails_hash
-
-        tails_dir = indy_client_dir(join("tails", self.revoc_reg_id), create=True)
-        tails_path = join(tails_dir, self.tails_hash)
-        move(join(tails_hopper_dir, self.tails_hash), tails_path)
-        self.tails_local_path = tails_path
-
-        async with profile.session() as session:
-            await self.save(session, reason="Generated registry")
-
     # TODO Delete me? Probably not needed anymore with the create_and_register_def
     async def set_tails_file_public_uri(self, profile: Profile, tails_file_uri: str):
         """Update tails file's publicly accessible URI."""
@@ -352,41 +256,6 @@ class IssuerRevRegRecord(BaseRecord):
                 )
 
         return rev_entry_res
-
-    async def create_and_register_list(
-        self,
-        profile: Profile,
-        options: Optional[dict] = None,
-        write_ledger: bool = True,  # TODO Delete me
-        endorser_did: str = None,  # TODO Delete me
-    ) -> RevListResult:
-        """Send a registry entry to the ledger."""
-        if not (self.revoc_reg_id and self.revoc_def_type and self.issuer_id):
-            raise RevocationError("Revocation registry undefined")
-
-        if self.state not in (IssuerRevRegRecord.STATE_POSTED,):
-            raise RevocationError(
-                "Revocation registry {} in state {}: cannot publish entry".format(
-                    self.revoc_reg_id, self.state
-                )
-            )
-
-        issuer = AnonCredsIssuer(profile)
-        result = await issuer.create_and_register_revocation_list(
-            self.revoc_reg_id,
-            options,
-        )
-
-        if self.state == IssuerRevRegRecord.STATE_POSTED:
-            self.state = (
-                IssuerRevRegRecord.STATE_ACTIVE
-            )  # registering rev status list activates
-            async with profile.session() as session:
-                await self.save(
-                    session, reason="Published initial revocation registry entry"
-                )
-
-        return result
 
     # TODO Update to align with rev status list (if that's even necessary; does
     # this move to indy registry?)
