@@ -7,6 +7,7 @@ from pathlib import Path
 from time import time
 from typing import NamedTuple, Optional, Sequence, Tuple
 from urllib.parse import urlparse
+import uuid
 
 from anoncreds import (
     AnoncredsError,
@@ -507,11 +508,8 @@ class AnonCredsIssuer:
 
     async def create_and_register_revocation_registry_definition(
         self,
-        issuer_id: str,
-        cred_def_id: str,
-        registry_type: str,
-        tag: str,
-        max_cred_num: int,
+        profile,
+        issuer_rev_reg_record: IssuerRevRegRecord,
         options: Optional[dict] = None,
     ) -> RevRegDefResult:
         """
@@ -529,9 +527,27 @@ class AnonCredsIssuer:
             RevRegDefResult: revocation registry definition result
 
         """
+
+        if not issuer_rev_reg_record.tag:
+            issuer_rev_reg_record.tag = issuer_rev_reg_record._id or str(uuid.uuid4())
+
+        if issuer_rev_reg_record.state != IssuerRevRegRecord.STATE_INIT:
+            raise RevocationError(
+                "Revocation registry {} in state {}: cannot generate".format(
+                    issuer_rev_reg_record.revoc_reg_id, issuer_rev_reg_record.state
+                )
+            )
+
+        LOGGER.debug(
+            "Creating revocation registry with size: %d",
+            issuer_rev_reg_record.max_cred_num,
+        )
+
         try:
-            async with self._profile.session() as session:
-                cred_def = await session.handle.fetch(CATEGORY_CRED_DEF, cred_def_id)
+            async with profile.session() as session:
+                cred_def = await session.handle.fetch(
+                    CATEGORY_CRED_DEF, issuer_rev_reg_record.cred_def_id
+                )
         except AskarError as err:
             raise AnonCredsIssuerError(
                 "Error retrieving credential definition"
@@ -551,12 +567,12 @@ class AnonCredsIssuer:
             ) = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: RevocationRegistryDefinition.create(
-                    cred_def_id,
+                    issuer_rev_reg_record.cred_def_id,
                     cred_def.raw_value,
-                    issuer_id,
-                    tag,
-                    registry_type,
-                    max_cred_num,
+                    issuer_rev_reg_record.issuer_id,
+                    issuer_rev_reg_record.tag,
+                    issuer_rev_reg_record.revoc_def_type,
+                    issuer_rev_reg_record.max_cred_num,
                     tails_dir_path=tails_dir,
                 ),
             )
@@ -570,7 +586,7 @@ class AnonCredsIssuer:
         rev_reg_def.value.tails_location = public_tails_uri
         anoncreds_registry = self.profile.inject(AnonCredsRegistry)
         result = await anoncreds_registry.register_revocation_registry_definition(
-            self.profile, rev_reg_def, options
+            self.profile, rev_reg_def, issuer_rev_reg_record.options
         )
 
         rev_reg_def_id = result.rev_reg_def_id
@@ -586,7 +602,7 @@ class AnonCredsIssuer:
                     CATEGORY_REV_REG_DEF,
                     rev_reg_def_id,
                     rev_reg_def_json,
-                    tags={"cred_def_id": cred_def_id},
+                    tags={"cred_def_id": issuer_rev_reg_record.cred_def_id},
                 )
                 await txn.handle.insert(
                     CATEGORY_REV_REG_DEF_PRIVATE,
@@ -596,6 +612,18 @@ class AnonCredsIssuer:
                 await txn.commit()
         except AskarError as err:
             raise AnonCredsIssuerError("Error saving new revocation registry") from err
+
+        issuer_rev_reg_record.revoc_reg_id = result.rev_reg_def_id
+        issuer_rev_reg_record.revoc_reg_def = result.rev_reg_def.serialize()
+        issuer_rev_reg_record.state = IssuerRevRegRecord.STATE_POSTED
+        issuer_rev_reg_record.tails_hash = result.rev_reg_def.value.tails_hash
+        issuer_rev_reg_record.tails_public_uri = result.rev_reg_def.value.tails_location
+        issuer_rev_reg_record.tails_local_path = self.get_local_tails_path(
+            result.rev_reg_def
+        )
+
+        async with profile.session() as session:
+            await issuer_rev_reg_record.save(session, reason="Generated registry")
 
         return result
 
@@ -687,25 +715,23 @@ class AnonCredsIssuer:
         self, rev_reg_record: IssuerRevRegRecord, options: Optional[dict] = None
     ):
         """Create and register a revocation list."""
-
+        rev_reg_id = rev_reg_record.revoc_reg_id
         if not (
-            rev_reg_record.revoc_reg_id
-            and rev_reg_record.revoc_def_type
-            and rev_reg_record.issuer_id
+            rev_reg_id and rev_reg_record.revoc_def_type and rev_reg_record.issuer_id
         ):
             raise RevocationError("Revocation registry undefined")
 
         if rev_reg_record.state not in (IssuerRevRegRecord.STATE_POSTED,):
             raise RevocationError(
                 "Revocation registry {} in state {}: cannot publish entry".format(
-                    rev_reg_record.revoc_reg_id, rev_reg_record.state
+                    rev_reg_id, rev_reg_record.state
                 )
             )
 
         try:
             async with self._profile.session() as session:
                 rev_reg_def_entry = await session.handle.fetch(
-                    CATEGORY_REV_REG_DEF, rev_reg_record.revoc_reg_id
+                    CATEGORY_REV_REG_DEF, rev_reg_id
                 )
         except AskarError as err:
             raise AnonCredsIssuerError(
@@ -714,13 +740,13 @@ class AnonCredsIssuer:
 
         if not rev_reg_def_entry:
             raise AnonCredsIssuerError(
-                f"Revocation registry definition not found for id {rev_reg_record.revoc_reg_id}"
+                f"Revocation registry definition not found for id {rev_reg_id}"
             )
 
         rev_reg_def = RevRegDef.deserialize(rev_reg_def_entry.value_json)
 
         rev_list = RevocationStatusList.create(
-            rev_reg_record.revoc_reg_id,
+            rev_reg_id,
             rev_reg_def_entry.raw_value,
             rev_reg_def.issuer_id,
         )
@@ -734,7 +760,7 @@ class AnonCredsIssuer:
             async with self._profile.session() as session:
                 await session.handle.insert(
                     CATEGORY_REV_LIST,
-                    rev_reg_record.revoc_reg_id,
+                    rev_reg_id,
                     result.revocation_list_state.revocation_list.to_json(),
                 )
         except AskarError as err:

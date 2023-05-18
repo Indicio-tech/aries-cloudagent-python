@@ -381,7 +381,14 @@ async def rev_reg_def_post(request: web.BaseRequest):
         )
     except RevocationNotSupportedError as e:
         raise web.HTTPBadRequest(reason=e.message) from e
-    result = await shield(issuer_rev_reg_rec.create_and_register_def(context.profile))
+    issuer = AnonCredsIssuer(context.profile)
+    result = await shield(
+        issuer.create_and_register_revocation_registry_definition(
+            context.profile,
+            issuer_rev_reg_rec,
+            options,
+        )
+    )
 
     return web.json_response(result.serialize())
 
