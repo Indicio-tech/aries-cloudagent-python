@@ -19,6 +19,8 @@ from anoncreds import (
     Schema,
 )
 from aries_askar import AskarError
+from aries_cloudagent.revocation.error import RevocationError
+from aries_cloudagent.revocation.models.issuer_rev_reg_record import IssuerRevRegRecord
 
 from ..askar.profile import AskarProfile, AskarProfileSession
 from ..core.error import BaseError
@@ -682,13 +684,28 @@ class AnonCredsIssuer:
         return [entry.name for entry in rev_reg_defs]
 
     async def create_and_register_revocation_list(
-        self, rev_reg_def_id: str, options: Optional[dict] = None
+        self, rev_reg_record: IssuerRevRegRecord, options: Optional[dict] = None
     ):
         """Create and register a revocation list."""
+
+        if not (
+            rev_reg_record.revoc_reg_id
+            and rev_reg_record.revoc_def_type
+            and rev_reg_record.issuer_id
+        ):
+            raise RevocationError("Revocation registry undefined")
+
+        if rev_reg_record.state not in (IssuerRevRegRecord.STATE_POSTED,):
+            raise RevocationError(
+                "Revocation registry {} in state {}: cannot publish entry".format(
+                    rev_reg_record.revoc_reg_id, rev_reg_record.state
+                )
+            )
+
         try:
             async with self._profile.session() as session:
                 rev_reg_def_entry = await session.handle.fetch(
-                    CATEGORY_REV_REG_DEF, rev_reg_def_id
+                    CATEGORY_REV_REG_DEF, rev_reg_record.revoc_reg_id
                 )
         except AskarError as err:
             raise AnonCredsIssuerError(
@@ -697,13 +714,13 @@ class AnonCredsIssuer:
 
         if not rev_reg_def_entry:
             raise AnonCredsIssuerError(
-                f"Revocation registry definition not found for id {rev_reg_def_id}"
+                f"Revocation registry definition not found for id {rev_reg_record.revoc_reg_id}"
             )
 
         rev_reg_def = RevRegDef.deserialize(rev_reg_def_entry.value_json)
 
         rev_list = RevocationStatusList.create(
-            rev_reg_def_id,
+            rev_reg_record.revoc_reg_id,
             rev_reg_def_entry.raw_value,
             rev_reg_def.issuer_id,
         )
@@ -717,11 +734,20 @@ class AnonCredsIssuer:
             async with self._profile.session() as session:
                 await session.handle.insert(
                     CATEGORY_REV_LIST,
-                    rev_reg_def_id,
+                    rev_reg_record.revoc_reg_id,
                     result.revocation_list_state.revocation_list.to_json(),
                 )
         except AskarError as err:
             raise AnonCredsIssuerError("Error saving new revocation registry") from err
+
+        if rev_reg_record.state == IssuerRevRegRecord.STATE_POSTED:
+            rev_reg_record.state = (
+                IssuerRevRegRecord.STATE_ACTIVE
+            )  # registering rev status list activates
+            async with self._profile.session() as session:
+                await rev_reg_record.save(
+                    session, reason="Published initial revocation registry entry"
+                )
 
         return result
 

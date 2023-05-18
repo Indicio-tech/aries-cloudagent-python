@@ -424,9 +424,10 @@ async def rev_list_post(request: web.BaseRequest):
 
     try:
         revoc = AnonCredsRevocation(context.profile)
-        rev_reg = await revoc.get_issuer_rev_reg_record(rev_reg_def_id)
-        result = await rev_reg.create_and_register_list(
-            context.profile,
+        rev_reg_record = await revoc.get_issuer_rev_reg_record(rev_reg_def_id)
+        issuer = AnonCredsIssuer(context.profile)
+        result = await issuer.create_and_register_revocation_list(
+            rev_reg_record,
             options,
         )
         LOGGER.debug("published revocation list for: %s", rev_reg_def_id)
