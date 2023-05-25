@@ -241,7 +241,14 @@ class RevocationManager:
                     await txn.commit()
                 await self.set_cred_revoked_state(issuer_rr_rec.revoc_reg_id, crids)
                 if prev:
-                    await issuer_rr_upd.send_entry(self._profile)
+                    issuer_rr_upd.ready_to_send_check()
+                    await issuer.update_revocation_list(  # use issuer to send entry
+                        issuer_rr_upd.tails_public_uri,
+                        issuer_rr_upd.revoc_reg_def,
+                        prev,
+                        curr,
+                    )
+                    await issuer_rr_upd.set_state_active(self._profile)
                 published = sorted(crid for crid in crids if crid not in failed_crids)
                 result[issuer_rr_rec.revoc_reg_id] = published
                 await notify_revocation_published_event(

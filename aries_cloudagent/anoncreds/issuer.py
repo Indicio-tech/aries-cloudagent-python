@@ -31,6 +31,7 @@ from .base import AnonCredsRegistrationError, AnonCredsSchemaAlreadyExists
 from .models.anoncreds_cred_def import CredDef, CredDefResult
 from .models.anoncreds_revocation import (
     RevList,
+    RevListResult,
     RevRegDef,
     RevRegDefResult,
     RevRegDefState,
@@ -1255,4 +1256,25 @@ class AnonCredsIssuer:
             prev=prev_list,
             curr=updated_list,
             failed=[str(rev_id) for rev_id in sorted(failed_crids)],
+        )
+
+    async def update_revocation_list(
+        self,
+        tails_public_uri,
+        revoc_reg_def,
+        prev_list,
+        curr_list,
+        options: Optional[dict] = None,
+    ) -> RevListResult:
+        """Send a registry entry to the ledger."""
+
+        self._check_url(tails_public_uri)
+
+        anoncreds_registry = self._profile.inject(AnonCredsRegistry)
+        return await anoncreds_registry.update_revocation_list(
+            profile=self._profile,
+            rev_reg_def=revoc_reg_def,
+            prev_list=prev_list,
+            curr_list=curr_list,
+            options=options,
         )

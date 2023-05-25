@@ -305,14 +305,7 @@ class IssuerRevRegRecord(BaseRecord):
 
         return rev_reg_res
 
-    async def send_entry(
-        self,
-        profile: Profile,
-        options: Optional[dict] = None,
-        write_ledger: bool = True,  # TODO Delete me
-        endorser_did: str = None,  # TODO Delete me
-    ) -> RevListResult:
-        """Send a registry entry to the ledger."""
+    def ready_to_send_check(self):
         if not (
             self.revoc_reg_id
             and self.revoc_def_type
@@ -329,19 +322,11 @@ class IssuerRevRegRecord(BaseRecord):
             IssuerRevRegRecord.STATE_FULL,  # can still publish revocation deltas
         ):
             raise RevocationError(
-                "Revocation registry {} in state {}: cannot publish entry".format(
-                    self.revoc_reg_id, self.state
-                )
+                f"Revocation registry {self.revoc_reg_id}"
+                f" in state {self.state}: cannot publish entry"
             )
 
-        anoncreds_registry = profile.inject(AnonCredsRegistry)
-        rev_entry_res = await anoncreds_registry.register_revocation_list(
-            profile,
-            self.revoc_reg_def,
-            self.rev_list,
-            options,
-        )
-
+    async def set_state_active(self, profile):
         if self.state == IssuerRevRegRecord.STATE_POSTED:
             self.state = (
                 IssuerRevRegRecord.STATE_ACTIVE
@@ -351,6 +336,22 @@ class IssuerRevRegRecord(BaseRecord):
                     session, reason="Published initial revocation registry entry"
                 )
 
+    async def send_entry(
+        self,
+        profile: Profile,
+        options: Optional[dict] = None,
+    ) -> RevListResult:
+        """Send a registry entry to the ledger."""
+
+        self.ready_to_send_check()
+        anoncreds_registry = profile.inject(AnonCredsRegistry)
+        rev_entry_res = await anoncreds_registry.register_revocation_list(
+            profile,
+            self.revoc_reg_def,
+            self.rev_list,
+            options,
+        )
+        await self.set_state_active(profile)
         return rev_entry_res
 
     async def create_and_register_list(
