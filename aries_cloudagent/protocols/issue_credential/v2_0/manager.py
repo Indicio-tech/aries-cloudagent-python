@@ -104,6 +104,8 @@ class V20CredManager:
         cred_preview: V20CredPreview,
         fmt2filter: Mapping[V20CredFormat.Format, Mapping[str, str]],
         trace: bool = False,
+        supplements: Sequence[Union[Mapping, Supplement]] = None,
+        attachments: Sequence[Union[Mapping, AttachDecorator]] = None,
     ) -> V20CredExRecord:
         """
         Create a credential proposal.
@@ -130,6 +132,8 @@ class V20CredManager:
             state=V20CredExRecord.STATE_PROPOSAL_SENT,
             auto_remove=auto_remove,
             trace=trace,
+            supplements=supplements,
+            attachments=attachments,
         )
 
         # Format specific create_proposal handler

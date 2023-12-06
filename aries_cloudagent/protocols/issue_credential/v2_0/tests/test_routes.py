@@ -1,4 +1,5 @@
 from asynctest import TestCase as AsyncTestCase, mock as async_mock
+import pytest
 
 from . import LD_PROOF_VC_DETAIL, TEST_DID
 from .. import routes as test_module
@@ -1741,8 +1742,11 @@ class TestV20CredRoutes(AsyncTestCase):
                 },
             }
         )
-        result = await test_module.create_hashlink(self.request)
-        assert result == {"result": EXAMPLE_LINK}
+        with async_mock.patch.object(
+                test_module.web, "json_response"
+            ) as mock_response:
+            await test_module.create_hashlink(self.request)
+            mock_response.assert_called_once_with({"result": EXAMPLE_LINK})
 
     async def test_register(self):
         mock_app = async_mock.MagicMock()
