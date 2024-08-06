@@ -42,8 +42,10 @@ Now open up two browser windows to the [Faber](http://localhost:8021/api/doc) an
 Using the Faber admin api, you have to create a DID with the appropriate:
 
 - DID method ("key" or "sov")
-- key type "ed25519" or "bls12381g2" (corresponding to signature types "Ed25519Signature2018" or "BbsBlsSignature2020")
-- if you use DID method "sov" you must use key type "ed25519"
+  - if you use DID method "sov" you must use key type "ed25519"
+- Either one of the following key types:
+  - "ed25519" (corresponding to signature types "Ed25519Signature2018" or "Ed25519Signature2020")
+  - "bls12381g2" (corresponding to signature type "BbsBlsSignature2020")
 
 Note that "did:sov" must be a public DID (i.e. registered on the ledger) but "did:key" is not.
 
@@ -203,7 +205,7 @@ You first include `https://schema.org` in the `@context` block of the credential
 
 Then you review the [attributes and objects defined by `https://schema.org`](https://schema.org/docs/schemas.html) and decide what you need to include in your credential.
 
-For example to issue a credetial with [givenName](https://schema.org/givenName), [familyName](https://schema.org/familyName) and [alumniOf](https://schema.org/alumniOf) attributes, submit the following:
+For example to issue a credential with [givenName](https://schema.org/givenName), [familyName](https://schema.org/familyName) and [alumniOf](https://schema.org/alumniOf) attributes, submit the following:
 
 ```json
 {
@@ -282,7 +284,7 @@ You can include more complex schemas, for example to use the schema.org [Person]
 
 ## Credential-Specific Contexts
 
-The recommended approach to defining credentials is to define a credential-specific vocabulary (or make use of existing ones).  (Note that these can include references to `https://schema.org`, you just shouldn't uste this directly in your credential.)
+The recommended approach to defining credentials is to define a credential-specific vocabulary (or make use of existing ones).  (Note that these can include references to `https://schema.org`, you just shouldn't use this directly in your credential.)
 
 ### Credential Issue Example
 
