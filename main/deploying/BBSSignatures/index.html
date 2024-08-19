@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../deploymentModel/">
+        <link rel="prev" href="../UpgradingACA-Py/">
       
       
-        <link rel="next" href="../BBSSignatures/">
+        <link rel="next" href="../IndySDKtoAskarMigration/">
       
       
       <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Upgrading ACA-Py - Hyperledger Aries ACA-Py Docs</title>
+        <title>Enabling BBS Signatures support - Hyperledger Aries ACA-Py Docs</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#upgrading-aca-py-data" class="md-skip">
+        <a href="#bbs-signatures-support" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Upgrading ACA-Py
+              Enabling BBS Signatures support
             
           </span>
         </div>
@@ -1670,6 +1670,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../UpgradingACA-Py/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrading ACA-Py
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1686,7 +1707,7 @@
           
   
   <span class="md-ellipsis">
-    Upgrading ACA-Py
+    Enabling BBS Signatures support
   </span>
   
 
@@ -1697,7 +1718,7 @@
         
   
   <span class="md-ellipsis">
-    Upgrading ACA-Py
+    Enabling BBS Signatures support
   </span>
   
 
@@ -1719,64 +1740,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#version-information-and-automatic-upgrades" class="md-nav__link">
+  <a href="#development-and-testing" class="md-nav__link">
     <span class="md-ellipsis">
-      Version Information and Automatic Upgrades
+      Development and Testing
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#forced-offline-upgrades" class="md-nav__link">
-    <span class="md-ellipsis">
-      Forced Offline Upgrades
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tagged-upgrades" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tagged upgrades
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#subwallet-upgrades" class="md-nav__link">
-    <span class="md-ellipsis">
-      Subwallet upgrades
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exceptions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Exceptions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Exceptions">
+    <nav class="md-nav" aria-label="Development and Testing">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#no-version-in-secure-storage" class="md-nav__link">
+  <a href="#developer-setup" class="md-nav__link">
     <span class="md-ellipsis">
-      No version in secure storage
+      Developer setup
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#forcing-an-upgrade" class="md-nav__link">
+  <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
-      Forcing an upgrade
+      Testing
     </span>
   </a>
   
@@ -1791,27 +1776,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../BBSSignatures/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Enabling BBS Signatures support
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -2323,64 +2287,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#version-information-and-automatic-upgrades" class="md-nav__link">
+  <a href="#development-and-testing" class="md-nav__link">
     <span class="md-ellipsis">
-      Version Information and Automatic Upgrades
+      Development and Testing
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#forced-offline-upgrades" class="md-nav__link">
-    <span class="md-ellipsis">
-      Forced Offline Upgrades
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tagged-upgrades" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tagged upgrades
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#subwallet-upgrades" class="md-nav__link">
-    <span class="md-ellipsis">
-      Subwallet upgrades
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exceptions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Exceptions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Exceptions">
+    <nav class="md-nav" aria-label="Development and Testing">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#no-version-in-secure-storage" class="md-nav__link">
+  <a href="#developer-setup" class="md-nav__link">
     <span class="md-ellipsis">
-      No version in secure storage
+      Developer setup
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#forcing-an-upgrade" class="md-nav__link">
+  <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
-      Forcing an upgrade
+      Testing
     </span>
   </a>
   
@@ -2409,107 +2337,20 @@
   
 
 
-<h1 id="upgrading-aca-py-data">Upgrading ACA-Py Data<a class="headerlink" href="#upgrading-aca-py-data" title="Permanent link">&para;</a></h1>
-<p>Some releases of ACA-Py may be improved by, or even require, an upgrade when
-moving to a new version. Such changes are documented in the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/CHANGELOG.md">CHANGELOG.md</a>,
-and those with ACA-Py deployments should take note of those upgrades. This
-document summarizes the upgrade system in ACA-Py.</p>
-<h2 id="version-information-and-automatic-upgrades">Version Information and Automatic Upgrades<a class="headerlink" href="#version-information-and-automatic-upgrades" title="Permanent link">&para;</a></h2>
-<p>The file <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/aries_cloudagent/version.py">version.py</a> contains the current version of a running instance of
-ACA-Py. In addition, a record is made in the ACA-Py secure storage (database)
-about the "most recently upgraded" version. When deploying a new version of
-ACA-Py, the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/aries_cloudagent/version.py">version.py</a> value will be higher than the version in
-secure storage. When that happens, an upgrade is executed, and on successful
-completion, the version is updated in secure storage to match what is
-in <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/aries_cloudagent/version.py">version.py</a>.</p>
-<p>Upgrades are defined in the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/aries_cloudagent/commands/default_version_upgrade_config.yml">Upgrade Definition YML file</a>. For a given
-version listed in the follow, the corresponding entry is what actions are
-required when upgrading from a previous version. If a version is not listed
-in the file, there is no upgrade defined for that version from its immediate
-predecessor version.</p>
-<p>Once an upgrade is identified as needed, the process is:</p>
-<ul>
-<li>Collect (if any) the actions to be taken to get from the version recorded in
-secure storage to the current <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/aries_cloudagent/version.py">version.py</a></li>
-<li>Execute the actions from oldest to newest.</li>
-<li>If the same action is collected more than once (e.g., "Resave the
-Connection Records" is defined for two different versions), perform the action
-only once.</li>
-<li>Store the current ACA-Py version (from <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/aries_cloudagent/version.py">version.py</a>) in the secure storage
-  database.</li>
-</ul>
-<h2 id="forced-offline-upgrades">Forced Offline Upgrades<a class="headerlink" href="#forced-offline-upgrades" title="Permanent link">&para;</a></h2>
-<p>In some cases, it may be necessary to do an offline upgrade, where ACA-Py is
-taken off line temporarily, the database upgraded explicitly, and then
-ACA-Py re-deployed as normal. As yet, we do not have any use cases for this, but
-those deploying ACA-Py should be aware of this possibility. For example,
-we may at some point need an upgrade that <strong>MUST NOT</strong> be executed by more
-than one ACA-Py instance. In that case, a "normal" upgrade could be dangerous
-for deployments on container orchestration platforms like Kubernetes.</p>
-<p>If the Maintainers of ACA-Py recognize a case where ACA-Py must be upgraded
-while offline, a new Upgrade feature will be added that will prevent the "auto
-upgrade" process from executing. See <a href="https://github.com/hyperledger/aries-cloudagent-python/issues/2201">Issue 2201</a> and <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/2204">Pull Request 2204</a> for
-the status of that feature.</p>
-<p>Those deploying ACA-Py upgrades for production installations (forced offline or
-not) should check in each <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/CHANGELOG.md">CHANGELOG.md</a> release entry about what upgrades (if
-any) will be run when upgrading to that version, and consider how they want
-those upgrades to run in their ACA-Py installation. In most cases, simply
-deploying the new version should be OK. If the number of records to be upgraded
-is high (such as a "resave connections" upgrade to a deployment with many, many
-connections), you may want to do a test upgrade offline first, to see if there
-is likely to be a service disruption during the upgrade. Plan accordingly!</p>
-<h2 id="tagged-upgrades">Tagged upgrades<a class="headerlink" href="#tagged-upgrades" title="Permanent link">&para;</a></h2>
-<p>Upgrades are defined in the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/aries_cloudagent/commands/default_version_upgrade_config.yml">Upgrade Definition YML file</a>, in addition to specifying upgrade actions by version they can also be specified by named tags. Unlike version based upgrades where all applicable version based actions will be performed based upon sorted order of versions, with named tags only actions corresponding to provided tags will be performed. Note: <code>--force-upgrade</code> is required when running name tags based upgrade (i.e. providing <code>--named-tag</code>).</p>
-<p>Tags are specified in YML file as below:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">fix_issue_rev_reg</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">fix_issue_rev_reg_records</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<h1 id="bbs-signatures-support">BBS Signatures Support<a class="headerlink" href="#bbs-signatures-support" title="Permanent link">&para;</a></h1>
+<p>ACA-Py has supported BBS Signatures for some time. However, the dependency that is used (<code>bbs</code>) does not support the ARM architecture, and its inclusion in the default ACA-Py artifacts mean that developers using ARM-based hardware (such as Apple M1 Macs or later) cannot run ACA-Py "out-of-the-box". We feel that providing a better developer experience by supporting the ARM architecture is more important than BBS Signature support at this time. As such, we have removed the BBS dependency from the base ACA-Py artifacts and made it an add-on that those using ACA-Py with BBS must take extra steps to build their own artifacts. This file describes how to do those extra steps.</p>
+<p>Regarding future support for BBS Signatures in ACA-Py. There is currently a lot of work going on in developing implementations and BBS-based Verifiable Credential standards. However, at the time of this release, there is not an obvious approach to an implementation to use in ACA-Py that includes ARM support. As a result, we will hold off on updating the BBS Signatures support in ACA-Py until the standards and path forward clarify. In the meantime, maintainers of ACA-Py plan to continue to do all we can to push for newer and better ZKP-based Verifiable Credential standards.</p>
+<p>If you require BBS for your deployment an optional "extended" ACA-Py image has been released (<code>aries-cloudagent-bbs</code>) that includes BBS, with the caveat that it will very likely not install on ARM architecture.</p>
+<h2 id="development-and-testing">Development and Testing<a class="headerlink" href="#development-and-testing" title="Permanent link">&para;</a></h2>
+<h3 id="developer-setup">Developer setup<a class="headerlink" href="#developer-setup" title="Permanent link">&para;</a></h3>
+<p>If you are a contributor or are developing using a local build of ACA-Py and need BBS, the easiest way to include it is to install the optional dependency <code>bbs</code> with <code>poetry</code> (again with the caveat that it will very likely not install on ARM architecture). The <code>--all-extras</code> flag will install the <code>bbs</code> optional dependency in ACA-Py:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>poetry<span class="w"> </span>install<span class="w"> </span>--all-extras
 </code></pre></div>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="w"> </span>./scripts/run_docker<span class="w"> </span>upgrade<span class="w"> </span>--force-upgrade<span class="w"> </span>--named-tag<span class="w"> </span>fix_issue_rev_reg
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># In case, running multiple tags [say test1 &amp; test2]:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w"> </span>./scripts/run_docker<span class="w"> </span>upgrade<span class="w"> </span>--force-upgrade<span class="w"> </span>--named-tag<span class="w"> </span>test1<span class="w"> </span>--named-tag<span class="w"> </span>test2
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<p>WARNNG: if you do NOT have <code>bbs</code> installed you should exclude the BBS specific integration tests from running with the tag <code>~@BBS</code> otherwise they will fail:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./run_bdd<span class="w"> </span>-t<span class="w"> </span>~@BBS
 </code></pre></div>
-<h2 id="subwallet-upgrades">Subwallet upgrades<a class="headerlink" href="#subwallet-upgrades" title="Permanent link">&para;</a></h2>
-<p>With multitenant enabled, there is a subwallet associated with each tenant profile, so there is a need to upgrade those sub wallets in addition to the base wallet associated with root profile.</p>
-<p>There are 2 options to perform such upgrades:</p>
-<ul>
-<li><code>--upgrade-all-subwallets</code></li>
-</ul>
-<p>This will apply the upgrade steps to all sub wallets (tenant profiles) and the base wallet (root profiles).</p>
-<ul>
-<li><code>--upgrade-subwallet</code></li>
-</ul>
-<p>This will apply the upgrade steps to specified sub wallets (identified by wallet id) and the base wallet.</p>
-<p>Note: multiple specifications allowed</p>
-<h2 id="exceptions">Exceptions<a class="headerlink" href="#exceptions" title="Permanent link">&para;</a></h2>
-<p>There are a couple of upgrade exception conditions to consider, as outlined
-in the following sections.</p>
-<h3 id="no-version-in-secure-storage">No version in secure storage<a class="headerlink" href="#no-version-in-secure-storage" title="Permanent link">&para;</a></h3>
-<p>Versions prior to ACA-Py 0.8.1 did not automatically populate the secure storage
-"version" record. That only occurred if an upgrade was explicitly executed. As
-of ACA-Py 0.8.1, the version record is added immediately after the secure
-storage database is created. If you are upgrading to ACA-Py 0.8.1 or later, and
-there is no version record in the secure storage, ACA-Py will assume you are
-running version 0.7.5, and execute the upgrades from version 0.7.5 to the
-current version. The choice of 0.7.5 as the default is safe because the same
-upgrades will be run on any version of ACA-Py up to and including 0.7.5, as can
-be seen in the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/aries_cloudagent/commands/default_version_upgrade_config.yml">Upgrade Definition YML file</a>. Thus, even if you are really
-upgrading from (for example) 0.6.2, the same upgrades are needed as from 0.7.5
-to a post-0.8.1 version.</p>
-<h3 id="forcing-an-upgrade">Forcing an upgrade<a class="headerlink" href="#forcing-an-upgrade" title="Permanent link">&para;</a></h3>
-<p>If you need to force an upgrade from a given version of ACA-Py, a pair of
-configuration options can be used together. If you specify "<code>--from-version
-&lt;ver&gt;</code>" and "<code>--force-upgrade</code>", the <code>--from-version</code> version will override what
-is found (or not) in secure storage, and the upgrade will be from that version
-to the current one. For example, if you have "0.8.1" in your "secure storage"
-version, and you know that the upgrade for version 0.8.1 has not been executed,
-you can use the parameters <code>--from-version v0.7.5 --force-upgrade</code> to force the
-upgrade on next starting an ACA-Py instance. However, given the few upgrades
-defined prior to version 0.8.1, and the "<a href="#no-version-in-secure-storage">no version in secure
-storage</a>" handling, it is unlikely this
-capability will ever be needed. We expect to deprecate and remove these
-options in future (post-0.8.1) ACA-Py versions.</p>
+<p>See the <a href="../../testing/UnitTests/">Unit</a> and <a href="../../testing/INTEGRATION-TESTS/">Integration</a> testing docs for more information on how to run tests.</p>
 
 
 
@@ -2545,7 +2386,7 @@ options in future (post-0.8.1) ACA-Py versions.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../deploymentModel/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Deployment Model">
+          <a href="../UpgradingACA-Py/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Upgrading ACA-Py">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -2555,20 +2396,20 @@ options in future (post-0.8.1) ACA-Py versions.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Deployment Model
+                Upgrading ACA-Py
               </div>
             </div>
           </a>
         
         
           
-          <a href="../BBSSignatures/" class="md-footer__link md-footer__link--next" aria-label="Next: Enabling BBS Signatures support">
+          <a href="../IndySDKtoAskarMigration/" class="md-footer__link md-footer__link--next" aria-label="Next: Indy SDK to Askar Migration">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Enabling BBS Signatures support
+                Indy SDK to Askar Migration
               </div>
             </div>
             <div class="md-footer__button md-icon">
