@@ -9,8 +9,10 @@
       
       
       
-        <link rel="prev" href="../Managing-ACA-Py-Doc-Site/">
+        <link rel="prev" href="../PUBLISHING/">
       
+      
+        <link rel="next" href="../UpdateRTD/">
       
       
       <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
@@ -18,7 +20,7 @@
     
     
       
-        <title>Updating the ACA-Py ReadTheDocs Site - Hyperledger Aries ACA-Py Docs</title>
+        <title>Managing the ACA-Py Documentation Site - Hyperledger Aries ACA-Py Docs</title>
       
     
     
@@ -70,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#managing-aries-cloud-agent-python-read-the-docs-documentation" class="md-skip">
+        <a href="#managing-the-aca-py-documentation-site" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Updating the ACA-Py ReadTheDocs Site
+              Managing the ACA-Py Documentation Site
             
           </span>
         </div>
@@ -2182,27 +2184,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../Managing-ACA-Py-Doc-Site/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Managing the ACA-Py Documentation Site
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -2219,7 +2200,7 @@
           
   
   <span class="md-ellipsis">
-    Updating the ACA-Py ReadTheDocs Site
+    Managing the ACA-Py Documentation Site
   </span>
   
 
@@ -2230,7 +2211,7 @@
         
   
   <span class="md-ellipsis">
-    Updating the ACA-Py ReadTheDocs Site
+    Managing the ACA-Py Documentation Site
   </span>
   
 
@@ -2252,71 +2233,38 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#generating-aca-py-read-the-docs-rtd-documentation" class="md-nav__link">
+  <a href="#generation-process" class="md-nav__link">
     <span class="md-ellipsis">
-      Generating ACA-Py Read The Docs (RTD) documentation
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Generating ACA-Py Read The Docs (RTD) documentation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Before you start
+      Generation Process
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#generate-module-files" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#preparing-for-a-release" class="md-nav__link">
     <span class="md-ellipsis">
-      Generate Module Files
+      Preparing for a Release
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#reviewing-the-files-locally" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#removing-rc-releases-from-the-generated-site" class="md-nav__link">
     <span class="md-ellipsis">
-      Reviewing the files locally
+      Removing RC Releases From the Generated Site
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#look-for-errors" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#adding-new-011x-releases" class="md-nav__link">
     <span class="md-ellipsis">
-      Look for Errors
+      Adding new 0.11.x Releases
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#checking-for-missing-modules" class="md-nav__link">
-    <span class="md-ellipsis">
-      Checking for missing modules
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#updating-the-readthedocsorg-site" class="md-nav__link">
-    <span class="md-ellipsis">
-      Updating the readthedocs.org site
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2324,6 +2272,27 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../UpdateRTD/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Updating the ACA-Py ReadTheDocs Site
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -2363,71 +2332,38 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#generating-aca-py-read-the-docs-rtd-documentation" class="md-nav__link">
+  <a href="#generation-process" class="md-nav__link">
     <span class="md-ellipsis">
-      Generating ACA-Py Read The Docs (RTD) documentation
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Generating ACA-Py Read The Docs (RTD) documentation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Before you start
+      Generation Process
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#generate-module-files" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#preparing-for-a-release" class="md-nav__link">
     <span class="md-ellipsis">
-      Generate Module Files
+      Preparing for a Release
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#reviewing-the-files-locally" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#removing-rc-releases-from-the-generated-site" class="md-nav__link">
     <span class="md-ellipsis">
-      Reviewing the files locally
+      Removing RC Releases From the Generated Site
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#look-for-errors" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#adding-new-011x-releases" class="md-nav__link">
     <span class="md-ellipsis">
-      Look for Errors
+      Adding new 0.11.x Releases
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#checking-for-missing-modules" class="md-nav__link">
-    <span class="md-ellipsis">
-      Checking for missing modules
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#updating-the-readthedocsorg-site" class="md-nav__link">
-    <span class="md-ellipsis">
-      Updating the readthedocs.org site
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2449,53 +2385,124 @@
   
 
 
-<h1 id="managing-aries-cloud-agent-python-read-the-docs-documentation">Managing Aries Cloud Agent Python <code>Read The Docs</code> Documentation<a class="headerlink" href="#managing-aries-cloud-agent-python-read-the-docs-documentation" title="Permanent link">&para;</a></h1>
-<p>This document describes how to maintain the <code>Read The Docs</code> documentation that
-is generated from the ACA-Py code base. As the structure of the ACA-Py code
-evolves, the RTD files need to be regenerated and possibly updated, as described here.</p>
-<h2 id="generating-aca-py-read-the-docs-rtd-documentation">Generating ACA-Py Read The Docs (RTD) documentation<a class="headerlink" href="#generating-aca-py-read-the-docs-rtd-documentation" title="Permanent link">&para;</a></h2>
-<h3 id="before-you-start">Before you start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h3>
-<p>To test generate and view the RTD documentation locally, you must install <a href="https://www.sphinx-doc.org/en/master/">Sphinx</a> and the
-<a href="https://pypi.org/project/sphinx-rtd-theme/">Sphinx RTD theme</a>. Follow the instructions on the respective pages to install
-and verify the installation on your system.</p>
-<h3 id="generate-module-files">Generate Module Files<a class="headerlink" href="#generate-module-files" title="Permanent link">&para;</a></h3>
-<p>To rebuild the project and settings from scratch (you'll need to move the generated index file up a level):</p>
-<p><code>rm -rf generated; sphinx-apidoc -f -M -o  ./generated ../aries_cloudagent/ $(find ../aries_cloudagent/ -name '*tests*')</code></p>
-<p>Note that the <code>find</code> command that is used to exclude any of the <code>test</code> python files from the RTD documentation.</p>
-<p>Check the <code>git status</code> in your repo to see if the generator updates, adds or removes any existing RTD modules.</p>
-<h3 id="reviewing-the-files-locally">Reviewing the files locally<a class="headerlink" href="#reviewing-the-files-locally" title="Permanent link">&para;</a></h3>
-<p>To auto-generate the module documentation locally run:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>sphinx-build<span class="w"> </span>-b<span class="w"> </span>html<span class="w"> </span>-a<span class="w"> </span>-E<span class="w"> </span>-c<span class="w"> </span>./<span class="w"> </span>./<span class="w"> </span>./_build
-</code></pre></div>
-<p>Once generated, go into the <code>_build</code> folder and open <code>index.html</code> in a browser. Note that the <code>_build</code> is
-<code>.gitignore</code>'d and so will not be part of a git push.</p>
-<h3 id="look-for-errors">Look for Errors<a class="headerlink" href="#look-for-errors" title="Permanent link">&para;</a></h3>
-<p>This is the hard part; looking for errors in docstrings added by devs. Some tips:</p>
+<h1 id="managing-the-aca-py-documentation-site">Managing the ACA-Py Documentation Site<a class="headerlink" href="#managing-the-aca-py-documentation-site" title="Permanent link">&para;</a></h1>
+<p>The ACA-Py documentation site is a <a href="https://squidfunk.github.io/mkdocs-material/">MkDocs Material</a> site generated from the
+Markdown files in this repository. Whenever the <code>main</code> branch is updated or a
+release branch is (possibly temporarily) created, the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/.github/workflows/publish-docs.yml">publish-docs</a> GitHub
+Action is fired, generating and publishing the documentation for the
+updated/created branch. The generation process generates the static set of HTML
+pages for the version in a folder in the <code>gh-pages</code> branch of this repo. The
+static pages for each (other than the <code>main</code> branch) version are not updated
+after creation. From time to time, some "extra" maintenance on the versions are
+needed and this document describes those activities.</p>
+<h2 id="generation-process">Generation Process<a class="headerlink" href="#generation-process" title="Permanent link">&para;</a></h2>
+<p>The generation process includes the following steps as part of the GitHub Action
+and mkdocs configuration.</p>
+<p>When the GitHub Action fires, it runs a container that carries out the following steps:</p>
 <ul>
-<li>missing imports (<code>No module named 'async_timeout'</code>) can be solved by adding the module to the
-list of <code>autodoc_mock_imports</code> in the <code>conf.py</code> file in the ACA-Py <code>docs</code> folder.</li>
-<li>Ignore any errors in .md files</li>
-<li>Ignore the warnings about including <code>docs/README.md</code></li>
-<li>Ignore an dist-package errors</li>
+<li>Checks out the triggering branch, either <code>main</code> or <code>docs-v&lt;version&gt;</code> (e.g <code>docs-v1.0.0</code>).</li>
+<li>Runs the script <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/scripts/prepmkdocs.sh">scripts/prepmkdocs.sh</a>, which moves and updates some of the
+  markdown files so that they fit into the generated site. See the comments in
+  the scripts for details about the copying and editing done via the script. In
+  general, the copying of files is to put markdown files in the root folder into
+  the <code>docs</code> folder, and to update links that need to be changed to work on the
+  generated site. This allows us to have links working using the GitHub UI and
+  on the generated site.</li>
+<li>Invokes the mkdocs extension <code>mike</code> that generates the mkdocs HTML pages and
+  then captures and commits them into the <code>gh-pages</code> branch of the repository.
+  It also adds (if needed) a reference to the new version in the site's
+  "versions" dropdown, enabling users to pick the version of the docs they want
+  to look at. The process uses the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/mkdocs.yml">mkdocs.yml</a> configuration file in generating
+  the site.</li>
 </ul>
-<p>Other than that, please investigate and fix things that you find. If there are fixes, it's usually
-to adhere to the rules around processing docstrings, and especially around JSON samples.</p>
-<h3 id="checking-for-missing-modules">Checking for missing modules<a class="headerlink" href="#checking-for-missing-modules" title="Permanent link">&para;</a></h3>
-<p>The file <code>index.rst</code> in the ACA-Py <code>docs</code> folder drive the RTD generation. It picks up all the modules
-in the source code, starting from the root <code>../aries_cloudagent</code> folder. However, some modules
-are not picked up automatically from the root and have to be manually added to <code>index.rst</code>. To do that:</p>
+<h2 id="preparing-for-a-release">Preparing for a Release<a class="headerlink" href="#preparing-for-a-release" title="Permanent link">&para;</a></h2>
+<p>When preparing for a release (or even just a PR to <code>main</code>) you can test the
+documentation site on your local clone using the following steps. The steps
+assume that you have installed <code>mkdocs</code> on your system. Guidance for that can be
+found in the <a href="https://squidfunk.github.io/mkdocs-material/">MkDocs Material</a> documentation.</p>
 <ul>
-<li>Get a list of all generated modules by running: <code>ls generated | grep "aries_cloudagent.[a-z]*.rst"</code></li>
-<li>Compare that list with the modules listed in the "Subpackages" section of the left side menu in your browser, including any listed below the "Submodules".</li>
+<li>Note the files changed in your repository that have not been committed. This
+  process will change and then "unchange" files in your local clone. The
+  "unchange" may not be perfect, so you want to be sure that no extra changed
+  files get into your next commit.</li>
+<li>Run the bash script <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/scripts/prepmkdocs.sh">scripts/prepmkdocs.sh</a>. It will change a number of files
+  in your local repository.</li>
+<li>Run <code>mkdocs</code>. Watch for warnings of missing documents and broken links in the
+  startup messages. See the notes below for dealing with those issues.</li>
+<li>Open your browser and browse the site, looking for any issues.</li>
+<li>Update the documents, <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/mkdocs.yml">mkdocs.yml</a> and the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/scripts/prepmkdocs.sh">scripts/prepmkdocs.sh</a> as needed,
+  repeating the generation process as needed.</li>
+<li>When you are happy run <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/scripts/prepmkdocs.sh">scripts/prepmkdocs.sh</a> with the parameter <code>clean</code>.
+  This should undo the changes done by the script. You should check that there
+  no unexpected files changed that you don't want committed into the repo.</li>
 </ul>
-<p>If any are missing, you likely need to add them to the <code>index.rst</code> file in the <code>toctree</code> section of the file.
-You will see there are already several instances of that, notably "connections" and "protocols".</p>
-<h3 id="updating-the-readthedocsorg-site">Updating the <a href="https://readthedocs.org">readthedocs.org</a> site<a class="headerlink" href="#updating-the-readthedocsorg-site" title="Permanent link">&para;</a></h3>
-<p>The RTD documentation is <strong>not</strong> currently auto-generated, so a manual re-generation of the documentation
-is still required.</p>
-<blockquote>
-<p>TODO: Automate this when new tags are applied to the repository.</p>
-</blockquote>
+<p>If there are missing documents, it may be that they are new Markdown files that
+have not yet been added to the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/mkdocs.yml">mkdocs.yml</a> navigation. Update that file to add
+the new files, and push the changes to the repository in a pull request. There
+are a few files listed below that we don't generate into the documentation site,
+and they can be ignored.</p>
+<ul>
+<li><code>assets/README.md</code></li>
+<li><code>design/AnoncredsW3CCompatibility.md</code></li>
+<li><code>design/UpgradeViaApi.md</code></li>
+<li><code>features/W3cCredentials.md</code></li>
+</ul>
+<p>If there are broken links, it is likely because there is a Markdown link that
+works using the GitHub UI (e.g. a relative link to a file in the repo) but
+doesn't on the generated site. In general there are two ways to fix these:</p>
+<ul>
+<li>Change the link in the Markdown file so that it is a fully qualified URL vs. a
+  relative link, so that it works in both the GitHub UI and the generated site.</li>
+<li>Extend the <a href="https://github.com/hyperledger/aries-cloudagent-python/blob/main/scripts/prepmkdocs.sh">scripts/prepmkdocs.sh</a> <code>sed</code> commands so that the link differs in
+  the GitHub UI and the generated site -- working in both. A pain, but sometimes
+  needed...</li>
+</ul>
+<h2 id="removing-rc-releases-from-the-generated-site">Removing RC Releases From the Generated Site<a class="headerlink" href="#removing-rc-releases-from-the-generated-site" title="Permanent link">&para;</a></h2>
+<p>Documentation is added to the site for release candidates (RCs). When those
+release candidates are replaced, we want to remove their documentation version
+from the documentation site. In the current GitHub Action, the version
+documentation is created but never deleted, so the process to remove the
+documentation for the RC is manual. It would be nice to create a mechanism in
+the GitHub Action to do this automatically, but its not there yet.</p>
+<p>To delete the documentation version, do the following:</p>
+<ul>
+<li>In your local fork, checkout the gh-pages: <code>git checkout -b gh-pages --track
+  upstream/gh-pages</code> (or use whatever local branch name you want)</li>
+<li>Check your <code>git status</code> and make sure there are no changes in the branch --
+  e.g., new files that shouldn't be added to the <code>gh-pages</code> branch. If there are
+  any -- delete the files so they are not added.</li>
+<li>Remove the folder for the RC.  For example <code>rm -rf 1.0.0rc4</code></li>
+<li>Edit the <code>versions.json</code> file and remove the reference to the RC release in
+  the file.</li>
+<li>Push the changes via a PR to the ACA-Py <code>gh-pages</code> branch (don't PR them into
+  <code>main</code>!!).</li>
+<li>Merge the PR and verify (after a few minutes) that the drop down no longer has
+  the RC in it.</li>
+</ul>
+<h2 id="adding-new-011x-releases">Adding new 0.11.x Releases<a class="headerlink" href="#adding-new-011x-releases" title="Permanent link">&para;</a></h2>
+<p>The automatic generation process from ACA-Py started with release 0.12.0.
+Unfortunately, we declared release 0.11.x to be an Long Term Support version and
+so we still need to add 0.11.x version documentation to the generated site.
+Here's the (lousy) process to do this. Typically, <a href="https://github.com/swcurran">swcurran</a> will do this and no
+one else needs to worry about it. But for completeness, here is the process:</p>
+<ul>
+<li>Follow the instructions in the <a href="https://github.com/hyperledger/aries-acapy-docs">aries-acapy-docs</a> repository to generate and
+  publish the documentation site for the new 0.11.x version.</li>
+<li>Have a local copy of the <a href="https://github.com/hyperledger/aries-acapy-docs">aries-acapy-docs</a> repository. In that repo, run <code>git
+  checkout -b gh-pages --track upstream/gh-pages</code> to checkout a local copy of
+  the generated pages from that repo.</li>
+<li>In ACA-Py, run <code>git checkout -b gh-pages --track upstream/gh-pages</code> to create
+  a local branch from which you will push a PR.</li>
+<li>Copy the v0.11.x folder from <a href="https://github.com/hyperledger/aries-acapy-docs">aries-acapy-docs</a> local to a new 0.11.x folder
+  in the ACA-Py local. Note the "v" that is on the folder in <a href="https://github.com/hyperledger/aries-acapy-docs">aries-acapy-docs</a>,
+  but not in ACA-Py.</li>
+<li>Edit the <code>versions.json</code> file to add the 0.11.x reference into the file.</li>
+<li>Push the changes via a PR to the ACA-Py <code>gh-pages</code> branch (don't PR them into
+  <code>main</code>!!).</li>
+<li>Merge the PR and verify (after a few minutes) that the drop down includes the
+  0.11.x version.</li>
+</ul>
+<p>Ugly! The LTS for 0.11 ends in January 2025 and this process can be dropped.</p>
 
 
 
@@ -2531,7 +2538,7 @@ is still required.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../Managing-ACA-Py-Doc-Site/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Managing the ACA-Py Documentation Site">
+          <a href="../PUBLISHING/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Publishing an ACA-Py Release">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2541,11 +2548,27 @@ is still required.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Managing the ACA-Py Documentation Site
+                Publishing an ACA-Py Release
               </div>
             </div>
           </a>
         
+        
+          
+          <a href="../UpdateRTD/" class="md-footer__link md-footer__link--next" aria-label="Next: Updating the ACA-Py ReadTheDocs Site">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Updating the ACA-Py ReadTheDocs Site
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
         
       </nav>
     
