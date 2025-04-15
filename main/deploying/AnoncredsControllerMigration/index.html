@@ -9,10 +9,6 @@
       
       
       
-        <link rel="prev" href="../IndySDKtoAskarMigration/">
-      
-      
-        <link rel="next" href="../Poetry/">
       
       
       <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
@@ -20,7 +16,7 @@
     
     
       
-        <title>Controller Migration to use AnonCreds Rust - ACA-Py Docs</title>
+        <title>AnonCreds Controller Migration - ACA-Py Docs</title>
       
     
     
@@ -111,7 +107,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Controller Migration to use AnonCreds Rust
+              AnonCreds Controller Migration
             
           </span>
         </div>
@@ -282,12 +278,10 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../deploymentModel/" class="md-tabs__link">
           
   
@@ -767,6 +761,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/ReuseConnection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reusing DIDComm Connections Between Agents
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/AnonCredsMethods/" class="md-nav__link">
         
   
@@ -899,7 +915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/AnoncredsProofValidation/" class="md-nav__link">
+      <a href="../../features/AnonCredsProofValidation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1681,28 +1697,25 @@
       
   
   
-    
   
   
-  
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -1714,7 +1727,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             Deploying
@@ -1813,31 +1826,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Controller Migration to use AnonCreds Rust
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../AnonCredsControllerMigration.md" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1847,329 +1839,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#step-1-endpoint-payload-and-response-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Step 1 - Endpoint Payload and Response Changes
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schemas" class="md-nav__link">
-    <span class="md-ellipsis">
-      Schemas
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Schemas">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#creating-a-schema" class="md-nav__link">
-    <span class="md-ellipsis">
-      Creating a Schema:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#credential-definitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Credential Definitions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Credential Definitions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#creating-a-credential-definition" class="md-nav__link">
-    <span class="md-ellipsis">
-      Creating a credential definition
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#getting-credential-definitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Getting credential definitions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#getting-a-credential-definition" class="md-nav__link">
-    <span class="md-ellipsis">
-      Getting a credential definition
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#revocation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Revocation
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Revocation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#create-and-publish-registry-definition" class="md-nav__link">
-    <span class="md-ellipsis">
-      Create and publish registry definition
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#send-revocation-entry-or-list-to-ledger" class="md-nav__link">
-    <span class="md-ellipsis">
-      Send revocation entry or list to ledger
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-current-active-registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get current active registry:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rotate-active-registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rotate active registry
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-credential-revocation-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get credential revocation status
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#publish-revocations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Publish revocations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-registries" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get registries
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get registry
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fix-reocation-state" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fix reocation state
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-number-of-issued-credentials" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get number of issued credentials
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-credential-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get credential details
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-revoked-credential-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get revoked credential details
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#set-state-manually" class="md-nav__link">
-    <span class="md-ellipsis">
-      Set state manually
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#upload-tails-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      Upload tails file
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#download-tails-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      Download tails file
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#revoke-a-credential" class="md-nav__link">
-    <span class="md-ellipsis">
-      Revoke a credential
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#clear-pending-revocations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Clear pending revocations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete-tails-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      Delete tails file
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#update-tails-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      Update tails file
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#additional-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      Additional Endpoints
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-2-trigger-the-upgrade-via-the-upgrade-endpoint" class="md-nav__link">
-    <span class="md-ellipsis">
-      Step 2 - Trigger the upgrade via the upgrade endpoint
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Step 2 - Trigger the upgrade via the upgrade endpoint">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#base-wallet-standalone-or-admin-wallet-in-multitenant-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      Base wallet (standalone) or admin wallet in multitenant mode
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#subwallet-tenant-in-multitenancy-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      Subwallet (tenant) in multitenancy mode
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3586,7 +3255,7 @@
 </ul>
 <h2 id="step-2-trigger-the-upgrade-via-the-upgrade-endpoint">Step 2 - Trigger the upgrade via the upgrade endpoint<a class="headerlink" href="#step-2-trigger-the-upgrade-via-the-upgrade-endpoint" title="Permanent link">&para;</a></h2>
 <p>The upgrade endpoint is at <strong>POST /anoncreds/wallet/upgrade</strong>.</p>
-<p>You need to be careful doing this, as there is no way to downgrade the wallet. It is recommended highly recommended to back-up any wallets and to test the upgrade in a development environment before upgrading a production wallet.</p>
+<p>You need to be careful doing this, as there is no way to downgrade the wallet. It is highly recommended to back-up any wallets and to test the upgrade in a development environment before upgrading a production wallet.</p>
 <p>Params: <code>wallet_name</code> is the name of the wallet to upgrade. Used to prevent accidental upgrades.</p>
 <p>The behavior for a base wallet (standalone) or admin wallet in multitenant mode is slightly different from the behavior of a subwallet (or tenant) in multitenancy mode. However, the upgrade process is the same.</p>
 <ol>
@@ -3598,8 +3267,9 @@
 <h3 id="base-wallet-standalone-or-admin-wallet-in-multitenant-mode">Base wallet (standalone) or admin wallet in multitenant mode<a class="headerlink" href="#base-wallet-standalone-or-admin-wallet-in-multitenant-mode" title="Permanent link">&para;</a></h3>
 <p>The agent will get a 503 error during the upgrade process. Any agent instance will shut down when the upgrade is complete. It is up to the aca-py agent to start up again. After the upgrade is complete the old endpoints will no longer be available and result in a 400 error.</p>
 <p>The aca-py agent will work after the restart. However, it will receive a warning for having the wrong wallet type configured. It is recommended to change the <code>wallet-type</code> to <code>askar-anoncreds</code> in the agent configuration file or start-up command.</p>
+<p><strong>Note:</strong> when in a multitenant mode, it is recommended to upgrade the admin wallet <em>before</em> the sub-wallets, as this will ensire new sub-wallets will be created using the <code>askar-anoncreds</code> wallet type. In order to invoke the upgrade endpoint for the admin wallet, the path <code>/anoncreds/wallet/upgrade</code> muse be "enabled" by adding it to the <code>base-wallet-paths</code> setting.</p>
 <h3 id="subwallet-tenant-in-multitenancy-mode">Subwallet (tenant) in multitenancy mode<a class="headerlink" href="#subwallet-tenant-in-multitenancy-mode" title="Permanent link">&para;</a></h3>
-<p>The sub-tenant which is in the process of being upgraded will get a 503 error during the upgrade process. All other sub-tenants will continue to operate normally. After the upgrade is complete the sub-tenant will be able to use the new endpoints. The old endpoints will no longer be available and result in a 403 error. Any aca-py agents will remain running after the upgrade and it's not required that the aca-py agent restarts. </p>
+<p>The sub-tenant which is in the process of being upgraded will get a 503 error during the upgrade process. All other sub-tenants will continue to operate normally. After the upgrade is complete the sub-tenant will be able to use the new endpoints. The old endpoints will no longer be available and result in a 403 error. Any aca-py agents will remain running after the upgrade and it's not required that the aca-py agent restarts.</p>
 
 
 
@@ -3630,44 +3300,6 @@
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../IndySDKtoAskarMigration/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Indy SDK to Askar Migration">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Indy SDK to Askar Migration
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../Poetry/" class="md-footer__link md-footer__link--next" aria-label="Next: The Use of Poetry in ACA-Py">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                The Use of Poetry in ACA-Py
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">

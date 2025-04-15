@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../SelectiveDisclosureJWTs/">
+        <link rel="prev" href="../DIDResolution/">
       
       
-        <link rel="next" href="../Multicredentials/">
+        <link rel="next" href="../AnonCredsMethods/">
       
       
       <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
@@ -20,7 +20,7 @@
     
     
       
-        <title>AnonCreds Presentation Validation - ACA-Py Docs</title>
+        <title>Reusing DIDComm Connections Between Agents - ACA-Py Docs</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#anoncreds-proof-validation-in-aca-py" class="md-skip">
+        <a href="#reusing-connections-between-agents" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              AnonCreds Presentation Validation
+              Reusing DIDComm Connections Between Agents
             
           </span>
         </div>
@@ -767,6 +767,186 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Reusing DIDComm Connections Between Agents
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Reusing DIDComm Connections Between Agents
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-generate-a-reusable-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Generate a Reusable Invitation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-verify-the-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Verify the Response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-reuse-the-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Reuse the Connection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-enables-connection-reuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Enables Connection Reuse?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-reuse-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling Reuse Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handling Reuse Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-event-notification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Event Notification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#listening-for-reuse-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Listening for Reuse Events
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo-vs-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      Demo vs. Production
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
@@ -899,31 +1079,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    AnonCreds Presentation Validation
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../AnonCredsProofValidation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -933,53 +1092,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#presentation-modifications-and-warnings" class="md-nav__link">
-    <span class="md-ellipsis">
-      Presentation Modifications and Warnings
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#presentation-pre-validation-errors" class="md-nav__link">
-    <span class="md-ellipsis">
-      Presentation Pre-validation Errors
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#anoncreds-verification-exceptions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Anoncreds Verification Exceptions
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1884,7 +1996,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deploying/AnoncredsControllerMigration/" class="md-nav__link">
+      <a href="../../deploying/AnonCredsControllerMigration.md" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2425,27 +2537,117 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#presentation-modifications-and-warnings" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Presentation Modifications and Warnings
+      Quick Start
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-generate-a-reusable-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Generate a Reusable Invitation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-verify-the-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Verify the Response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-reuse-the-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Reuse the Connection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-enables-connection-reuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Enables Connection Reuse?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-reuse-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling Reuse Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handling Reuse Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-event-notification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Event Notification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#listening-for-reuse-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Listening for Reuse Events
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#presentation-pre-validation-errors" class="md-nav__link">
+  <a href="#demo-vs-production" class="md-nav__link">
     <span class="md-ellipsis">
-      Presentation Pre-validation Errors
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#anoncreds-verification-exceptions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Anoncreds Verification Exceptions
+      Demo vs. Production
     </span>
   </a>
   
@@ -2470,67 +2672,159 @@
   
 
 
-<h1 id="anoncreds-proof-validation-in-aca-py">AnonCreds Proof Validation in ACA-Py<a class="headerlink" href="#anoncreds-proof-validation-in-aca-py" title="Permanent link">&para;</a></h1>
-<p>ACA-Py performs pre-validation when verifying AnonCreds presentations (proofs). Some scenarios are rejected (such as those indicative of tampering), while some attributes are removed before running the AnonCreds validation (e.g., removing superfluous non-revocation timestamps). Any ACA-Py validations or presentation modifications are indicated by the "verify_msgs" attribute in the final presentation exchange object.</p>
-<p>The list of possible verification messages can be found <a href="https://github.com/openwallet-foundation/acapy/blob/main/acapy_agent/indy/verifier.py#L24">here</a>, and consists of:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">PresVerifyMsg</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Credential verification codes.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">RMV_REFERENT_NON_REVOC_INTERVAL</span> <span class="o">=</span> <span class="s2">&quot;RMV_RFNT_NRI&quot;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">RMV_GLOBAL_NON_REVOC_INTERVAL</span> <span class="o">=</span> <span class="s2">&quot;RMV_GLB_NRI&quot;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">TSTMP_OUT_NON_REVOC_INTRVAL</span> <span class="o">=</span> <span class="s2">&quot;TS_OUT_NRI&quot;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">CT_UNREVEALED_ATTRIBUTES</span> <span class="o">=</span> <span class="s2">&quot;UNRVL_ATTR&quot;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">PRES_VALUE_ERROR</span> <span class="o">=</span> <span class="s2">&quot;VALUE_ERROR&quot;</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">PRES_VERIFY_ERROR</span> <span class="o">=</span> <span class="s2">&quot;VERIFY_ERROR&quot;</span>
+<h1 id="reusing-connections-between-agents">Reusing Connections Between Agents<a class="headerlink" href="#reusing-connections-between-agents" title="Permanent link">&para;</a></h1>
+<p>Leverage ACA‑Py's Out‑of‑Band (OOB) protocol to reuse existing connections instead of creating new ones for every interaction.</p>
+<hr />
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<p><em>For developers who want code now</em></p>
+<h3 id="1-generate-a-reusable-invitation">1. Generate a Reusable Invitation<a class="headerlink" href="#1-generate-a-reusable-invitation" title="Permanent link">&para;</a></h3>
+<p>Use the following API call to create an invitation that supports connection reuse. Note that the invitation must include a resolvable DID (e.g., <code>did:peer:2</code>) in its <code>services</code> field. This is achieved by setting the <code>use_did_method</code> parameter.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s1">&#39;http://your-agent-admin:8031/out-of-band/create-invitation?auto_accept=true&amp;multi_use=true&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;accept: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;Authorization: Bearer YOUR_API_KEY&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    &quot;handshake_protocols&quot;: [&quot;https://didcomm.org/didexchange/1.1&quot;],</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    &quot;protocol_version&quot;: &quot;1.1&quot;,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    &quot;use_did_method&quot;: &quot;did:peer:2&quot;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">  }&#39;</span>
 </code></pre></div>
-<p>If there is additional information, it will be included like this: <code>TS_OUT_NRI::19_uuid</code> (which means the attribute identified by <code>19_uuid</code> contained a timestamp outside of the non-revocation interval (this is just a warning)).</p>
-<p>A presentation verification may include multiple messages, for example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>    <span class="o">...</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="s2">&quot;verified&quot;</span><span class="p">:</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="s2">&quot;verified_msgs&quot;</span><span class="p">:</span> <span class="p">[</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="s2">&quot;TS_OUT_NRI::18_uuid&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="s2">&quot;TS_OUT_NRI::18_id_GE_uuid&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="s2">&quot;TS_OUT_NRI::18_busid_GE_uuid&quot;</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="p">],</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="o">...</span>
+<h3 id="2-verify-the-response">2. Verify the Response<a class="headerlink" href="#2-verify-the-response" title="Permanent link">&para;</a></h3>
+<p>Ensure that the response contains a <code>services</code> array with a resolvable DID:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;initial&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;trace&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;invi_msg_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ffaf017e-3980-45b7-ad43-a90a609d6eaf&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">&quot;oob_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ed7cc3f6-62cd-4b53-9285-534c198a8476&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nt">&quot;invitation&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">&quot;@type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://didcomm.org/out-of-band/1.1/invitation&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">&quot;@id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ffaf017e-3980-45b7-ad43-a90a609d6eaf&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;First invitation to Barry&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">&quot;imageUrl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://example-image.com&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nt">&quot;handshake_protocols&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="s2">&quot;https://didcomm.org/didexchange/1.1&quot;</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="p">],</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nt">&quot;services&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">      </span><span class="s2">&quot;did:peer:2.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7&quot;</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">  </span><span class="nt">&quot;invitation_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://example-admin.com?oob=example-1-invite-encoded-url&quot;</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="p">}</span>
 </code></pre></div>
-<p>... or it may include a single message, for example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>    <span class="o">...</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s2">&quot;verified&quot;</span><span class="p">:</span> <span class="s2">&quot;false&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="s2">&quot;verified_msgs&quot;</span><span class="p">:</span> <span class="p">[</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="s2">&quot;VALUE_ERROR::Encoded representation mismatch for &#39;Preferred Name&#39;&quot;</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="p">],</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="o">...</span>
+<h3 id="3-reuse-the-connection">3. Reuse the Connection<a class="headerlink" href="#3-reuse-the-connection" title="Permanent link">&para;</a></h3>
+<p>When an invitee scans subsequent invitations that contain the <strong>same DID</strong>, ACA‑Py automatically sends a <code>reuse</code> message instead of creating a new connection.</p>
+<hr />
+<h2 id="key-concepts">Key Concepts<a class="headerlink" href="#key-concepts" title="Permanent link">&para;</a></h2>
+<h3 id="what-enables-connection-reuse">What Enables Connection Reuse?<a class="headerlink" href="#what-enables-connection-reuse" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Resolvable DID</strong>  </li>
+<li>The invitation’s <code>services</code> array <strong>must</strong> include a resolvable DID (e.g., <code>did:peer:2</code> or <code>did:peer:4</code>), as specified by the <code>use_did_method</code> parameter.</li>
+<li>
+<p><em>Do not use inline or non‑resolvable DIDs (e.g., <code>did:key</code>).</em></p>
+</li>
+<li>
+<p><strong>Consistent DID Across Invitations</strong>  </p>
+</li>
+<li>
+<p>The inviter (e.g., the issuer) must reuse the same resolvable DID in subsequent invitations where reuse is desired. This consistency is enforced by setting <code>use_did_method</code> to <code>did:peer:2</code> (or <code>did:peer:4</code>) in the API call.</p>
+</li>
+<li>
+<p><strong>Protocol Version</strong>  </p>
+</li>
+<li>Use <code>didexchange/1.1</code> (avoid the legacy <code>1.0</code>).</li>
+</ol>
+<h4 id="critical-api-parameters">Critical API Parameters<a class="headerlink" href="#critical-api-parameters" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>use_did_method</code></td>
+<td>Set to <code>did:peer:2</code> or <code>did:peer:4</code> (required for reuse).</td>
+</tr>
+<tr>
+<td><code>multi_use</code></td>
+<td>Optional but recommended for enabling multi‑use invitations.</td>
+</tr>
+<tr>
+<td><code>handshake_protocols</code></td>
+<td>Must include <code>https://didcomm.org/didexchange/1.1</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="handling-reuse-events">Handling Reuse Events<a class="headerlink" href="#handling-reuse-events" title="Permanent link">&para;</a></h2>
+<p>When a connection is reused, ACA-Py automatically emits an event notification. This event contains the <code>connection_id</code> of the reused connection, allowing applications to track reuse activity programmatically.</p>
+<h3 id="example-event-notification">Example Event Notification<a class="headerlink" href="#example-event-notification" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;thread_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;096cf986-9211-450c-9cbb-a6d701c4d9ca&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;connection_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;28818825-98a3-44c7-b1cc-d429c1583a1d&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;comment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Connection 28818825-98a3-44c7-b1cc-d429c1583a1d is being reused for invitation 6f6af313-3735-4ac1-b972-aafebd3731bc&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">}</span>
 </code></pre></div>
-<p>... or the <code>verified_msgs</code> may be null or an empty array.</p>
-<h2 id="presentation-modifications-and-warnings">Presentation Modifications and Warnings<a class="headerlink" href="#presentation-modifications-and-warnings" title="Permanent link">&para;</a></h2>
-<p>The following modifications/warnings may be made by ACA-Py, which shouldn't affect the verification of the received proof:</p>
-<ul>
-<li>"RMV_RFNT_NRI": Referent contains a non-revocation interval for a non-revocable credential (timestamp is removed)</li>
-<li>"RMV_GLB_NRI": Presentation contains a global interval for a non-revocable credential (timestamp is removed)</li>
-<li>"TS_OUT_NRI": Presentation contains a non-revocation timestamp outside of the requested non-revocation interval (warning)</li>
-<li>"UNRVL_ATTR": Presentation contains attributes with unrevealed values (warning)</li>
-</ul>
-<h2 id="presentation-pre-validation-errors">Presentation Pre-validation Errors<a class="headerlink" href="#presentation-pre-validation-errors" title="Permanent link">&para;</a></h2>
-<p>The following pre-verification checks are performed, which will cause the proof to fail (before calling anoncreds) and result in the following message:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>VALUE_ERROR::&lt;description of the failed validation&gt;
-</code></pre></div>
-<p>These validations are all performed within the <a href="https://github.com/openwallet-foundation/acapy/blob/main/acapy_agent/indy/verifier.py">Indy verifier class</a> - to see the detailed validation, look for any occurrences of <code>raise ValueError(...)</code> in the code.</p>
-<p>A summary of the possible errors includes:</p>
-<ul>
-<li>Information missing in presentation exchange record</li>
-<li>Timestamp provided for irrevocable credential</li>
-<li>Referenced revocation registry not found on ledger</li>
-<li>Timestamp outside of reasonable range (future date or pre-dates revocation registry)</li>
-<li>Mismatch between provided and requested timestamps for non-revocation</li>
-<li>Mismatch between requested and provided attributes or predicates</li>
-<li>Self-attested attribute provided for a requested attribute with restrictions</li>
-<li>Encoded value doesn't match raw value</li>
-</ul>
-<h2 id="anoncreds-verification-exceptions">Anoncreds Verification Exceptions<a class="headerlink" href="#anoncreds-verification-exceptions" title="Permanent link">&para;</a></h2>
-<p>Typically, when you call the anoncreds <code>verifier_verify_proof()</code> method, it will return a <code>True</code> or <code>False</code> based on whether the presentation cryptographically verifies. However, in the case where anoncreds throws an exception, the exception text will be included in a verification message as follows:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>VERIFY_ERROR::&lt;the exception text&gt;
-</code></pre></div>
+<h3 id="listening-for-reuse-events">Listening for Reuse Events<a class="headerlink" href="#listening-for-reuse-events" title="Permanent link">&para;</a></h3>
+<p>Applications can subscribe to these events via the WebSocket or webhooks event stream provided by ACA-Py. To listen for reuse events:</p>
+<ol>
+<li>Connect to the ACA-Py WebSocket server or setup a webhook endpoint.</li>
+<li>Filter events with <code>type=connection_reuse</code>.</li>
+<li>Handle the event in your application logic.</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th><strong>Symptom</strong></th>
+<th><strong>Likely Cause</strong></th>
+<th><strong>Solution</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New connection created instead of reused</td>
+<td>Invitation uses a non‑resolvable DID, <code>use_did_method</code> not set</td>
+<td>Set <code>use_did_method=did:peer:2</code> (or <code>did:peer:4</code>) in the <code>/out-of-band/create-invitation</code> call.</td>
+</tr>
+<tr>
+<td><code>reuse</code> message not sent</td>
+<td>Invitee agent doesn’t support OOB v1.1</td>
+<td>Ensure both agents are using <code>didexchange/1.1</code>.</td>
+</tr>
+<tr>
+<td>DID resolution failed</td>
+<td>The resolver does not support the chosen DID</td>
+<td>Configure a DID resolver that supports the selected peer DID method.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="demo-vs-production">Demo vs. Production<a class="headerlink" href="#demo-vs-production" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th><strong>Scenario</strong></th>
+<th><strong>Approach</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Demo</strong></td>
+<td>Use CLI flags such as <code>--reuse-connections</code>.</td>
+</tr>
+<tr>
+<td><strong>Production</strong></td>
+<td>Rely on API parameters (<code>use_did_method</code>, <code>multi_use</code>) for reuse events.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Contributor Note:</strong><br />
+Tested with BC Wallet &amp; Hologram apps. Reuse functionality has been confirmed to work with <code>did:peer:2</code> (see <a href="https://github.com/hyperledger/aries-cloudagent-python/issues/3532">Issue #3532</a>).</p>
+<p>For more information on Qualified DIDs (e.g., <code>did:peer:2</code>, <code>did:peer:4</code>), visit the <a href="https://aca-py.org/latest/features/QualifiedDIDs/">Qualified DIDs Documentation</a>.</p>
 
 
 
@@ -2566,7 +2860,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../SelectiveDisclosureJWTs/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Using SD-JWTs">
+          <a href="../DIDResolution/" class="md-footer__link md-footer__link--prev" aria-label="Previous: DID Resolution">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2576,20 +2870,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Using SD-JWTs
+                DID Resolution
               </div>
             </div>
           </a>
         
         
           
-          <a href="../Multicredentials/" class="md-footer__link md-footer__link--next" aria-label="Next: Multiple Credential Types">
+          <a href="../AnonCredsMethods/" class="md-footer__link md-footer__link--next" aria-label="Next: Publishing AnonCreds Objects To Other Ledgers/Verifiable Data Registries">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Multiple Credential Types
+                Publishing AnonCreds Objects To Other Ledgers/Verifiable Data Registries
               </div>
             </div>
             <div class="md-footer__button md-icon">
