@@ -42,6 +42,7 @@ def init_argument_parser(parser: ArgumentParser):
 
 def execute(argv: Sequence[str] = None):
     """Entrypoint."""
+    LOGGER.warning("INDICIO DEBUG BUILD")
     parser = arg.create_argument_parser(prog=PROG)
     parser.prog += " start"
     get_settings = init_argument_parser(parser)
@@ -60,6 +61,7 @@ def execute(argv: Sequence[str] = None):
     if uvloop:
         uvloop.install()
         LOGGER.info("uvloop installed")
+    LOGGER.warning("INDICIO DEBUG BUILD")
     run_loop(start_app(conductor), shutdown_app(conductor))
 
 
