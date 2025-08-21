@@ -368,4 +368,5 @@ class AnonCredsPresExchangeHandler(V20PresFormatHandler):
         )
         pres_ex_record.verified = json.dumps(verified)
         pres_ex_record.verified_msgs = list(set(verified_msgs))
+        LOGGER.debug(f"Presentation msgs: {verified_msgs}")
         return pres_ex_record

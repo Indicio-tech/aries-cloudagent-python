@@ -73,6 +73,7 @@ class AnonCredsVerifier:
                             f"{PresVerifyMsg.RMV_REFERENT_NON_REVOC_INTERVAL.value}::"
                             f"{uuid}"
                         )
+                        LOGGER.debug(f"1Presentation msgs: {msgs}")
                         LOGGER.info(
                             (
                                 "Amended presentation request (nonce=%s): removed "
@@ -93,6 +94,7 @@ class AnonCredsVerifier:
         ):
             pres_req.pop("non_revoked", None)
             msgs.append(PresVerifyMsg.RMV_GLOBAL_NON_REVOC_INTERVAL.value)
+            LOGGER.debug(f"2Presentation msgs: {msgs}")
             LOGGER.warning(
                 (
                     "Amended presentation request (nonce=%s); removed global "
@@ -198,6 +200,7 @@ class AnonCredsVerifier:
                                 f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::"
                                 f"{uuid}"
                             )
+                            LOGGER.debug(f"3Presentation msgs: {msgs}")
                             LOGGER.info(
                                 f"Timestamp {timestamp} from ledger for item"
                                 f"{uuid} falls outside non-revocation interval "
@@ -206,6 +209,7 @@ class AnonCredsVerifier:
                 elif uuid in unrevealed_attrs:
                     # nothing to do, attribute value is not revealed
                     msgs.append(f"{PresVerifyMsg.CT_UNREVEALED_ATTRIBUTES.value}::{uuid}")
+                    LOGGER.debug(f"4Presentation msgs: {msgs}")
                 elif uuid not in self_attested:
                     raise ValueError(
                         f"Presentation attributes mismatch requested attribute {uuid}"
@@ -236,6 +240,7 @@ class AnonCredsVerifier:
                         msgs.append(
                             f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::{uuid}"
                         )
+                        LOGGER.debug(f"5Presentation msgs: {msgs}")
                         LOGGER.warning(
                             f"Timestamp {timestamp} from ledger for item"
                             f"{uuid} falls outside non-revocation interval "
@@ -265,6 +270,7 @@ class AnonCredsVerifier:
                     msgs.append(
                         f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::{uuid}"
                     )
+                    LOGGER.debug(f"6Presentation msgs: {msgs}")
                     LOGGER.warning(
                         f"Best-effort timestamp {timestamp} "
                         "from ledger falls outside non-revocation interval "
@@ -331,6 +337,7 @@ class AnonCredsVerifier:
                     # unrevealed attribute, nothing to do
                     pres_req_attr_spec = {}
                     msgs.append(f"{PresVerifyMsg.CT_UNREVEALED_ATTRIBUTES.value}::{uuid}")
+                    LOGGER.debug(f"7Presentation msgs: {msgs}")
                 elif uuid in self_attested:
                     if not req_attr.get("restrictions"):
                         continue
@@ -450,13 +457,17 @@ class AnonCredsVerifier:
         msgs = []
         try:
             msgs += self.non_revoc_intervals(pres_req, pres, credential_definitions)
+            LOGGER.debug(f"8Presentation msgs: {msgs}")
             msgs += await self.check_timestamps(
                 self.profile, pres_req, pres, rev_reg_defs
             )
+            LOGGER.debug(f"9Presentation msgs: {msgs}")
             msgs += await self.pre_verify(pres_req, pres)
+            LOGGER.debug(f"10Presentation msgs: {msgs}")
         except ValueError as err:
             s = str(err)
             msgs.append(f"{PresVerifyMsg.PRES_VALUE_ERROR.value}::{s}")
+            LOGGER.debug(f"11Presentation msgs: {msgs}")
             LOGGER.error(
                 f"Presentation on nonce={pres_req['nonce']} "
                 f"cannot be validated: {str(err)}"
@@ -481,6 +492,7 @@ class AnonCredsVerifier:
         except AnoncredsError as err:
             s = str(err)
             msgs.append(f"{PresVerifyMsg.PRES_VERIFY_ERROR.value}::{s}")
+            LOGGER.debug(f"12Presentation msgs: {msgs}")
             LOGGER.exception(
                 f"Validation of presentation on nonce={pres_req['nonce']} "
                 "failed with error"
