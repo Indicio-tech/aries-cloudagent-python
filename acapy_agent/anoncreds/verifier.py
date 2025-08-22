@@ -59,6 +59,9 @@ class AnonCredsVerifier:
             "revealed_attr_groups": "requested_attributes",
             "predicates": "requested_predicates",
         }.items():
+            LOGGER.debug(
+                f"[Indicio:Colton] non_revoc intervals, checking {req_proof_key} and {pres_key}"
+            )
             for uuid, spec in pres["requested_proof"].get(req_proof_key, {}).items():
                 if (
                     "revocation"
@@ -85,6 +88,9 @@ class AnonCredsVerifier:
                             uuid,
                         )
 
+        LOGGER.debug(
+            f"[Indicio:Colton] non_revoc intervals, checking timestamp {spec.get('timestamp')} and revocation in identifiers {pres['identifiers']}"
+        )
         if all(
             (
                 spec.get("timestamp") is None
@@ -124,6 +130,9 @@ class AnonCredsVerifier:
         """
         msgs = []
         now = int(time())
+        LOGGER.debug(
+            "[Indicio:Colton] extracting non-revocation intervals from proof request"
+        )
         non_revoc_intervals = extract_non_revocation_intervals_from_proof_request(
             pres_req
         )
@@ -131,14 +140,22 @@ class AnonCredsVerifier:
 
         # timestamp for irrevocable credential
         cred_defs: List[GetCredDefResult] = []
+        LOGGER.debug("[Indicio:Colton] looping through presentation identifiers")
         for index, ident in enumerate(pres["identifiers"]):
             LOGGER.debug(f">>> got (index, ident): ({index},{ident})")
             cred_def_id = ident["cred_def_id"]
             anoncreds_registry = profile.inject(AnonCredsRegistry)
+            LOGGER.debug(
+                f"[Indicio:Colton] retrieving credential definition for {cred_def_id}"
+            )
             cred_def_result = await anoncreds_registry.get_credential_definition(
                 profile, cred_def_id
             )
+            LOGGER.debug(f"[Indicio:Colton] got credential definition: {cred_def_result}")
             cred_defs.append(cred_def_result)
+            LOGGER.debug(
+                f"[Indicio:Colton] checking timestamp for identifier {ident}: {ident.get('timestamp')}"
+            )
             if ident.get("timestamp"):
                 if not cred_def_result.credential_definition.value.revocation:
                     raise ValueError(
@@ -147,17 +164,29 @@ class AnonCredsVerifier:
                     )
 
         # timestamp in the future too far in the past
+        LOGGER.debug(
+            f"[Indicio:Colton] looping through presentation identifiers: {pres['identifiers']}"
+        )
         for ident in pres["identifiers"]:
             timestamp = ident.get("timestamp")
             rev_reg_id = ident.get("rev_reg_id")
 
+            LOGGER.debug(
+                f"[Indicio:Colton] checking timestamp {timestamp} and revocation {rev_reg_id}"
+            )
             if not timestamp:
                 continue
 
             if timestamp > now + 300:  # allow 5 min for clock skew
+                LOGGER.debug(
+                    f"[Indicio:Colton] timestamp {timestamp} is too far in the future"
+                )
                 raise ValueError(f"Timestamp {timestamp} is in the future")
             reg_def = rev_reg_defs.get(rev_reg_id)
             if not reg_def:
+                LOGGER.debug(
+                    f"[Indicio:Colton] missing registry definition for {rev_reg_id}"
+                )
                 raise ValueError(f"Missing registry definition for '{rev_reg_id}'")
             # TODO Generic anoncreds rev reg def does not include txn time or similar
             # if "txnTime" not in reg_def:
@@ -175,12 +204,21 @@ class AnonCredsVerifier:
         revealed_groups = pres["requested_proof"].get("revealed_attr_groups", {})
         self_attested = pres["requested_proof"].get("self_attested_attrs", {})
         preds = pres["requested_proof"].get("predicates", {})
+        LOGGER.debug("[Indicio:Colton] checking requested attributes")
         for uuid, req_attr in pres_req["requested_attributes"].items():
+            LOGGER.debug(
+                f"[Indicio:Colton] checking requested attribute {uuid}: {req_attr}"
+            )
             if "name" in req_attr:
+                LOGGER.debug(f"[Indicio:Colton] found name in requested attribute {uuid}")
                 if uuid in revealed_attrs:
+                    LOGGER.debug(f"[Indicio:Colton] found revealed attribute {uuid}")
                     index = revealed_attrs[uuid]["sub_proof_index"]
                     if cred_defs[index].credential_definition.value.revocation:
                         timestamp = pres["identifiers"][index].get("timestamp")
+                        LOGGER.debug(
+                            f"[Indicio:Colton] checking timestamp for identifier {index}: {timestamp}"
+                        )
                         if (timestamp is not None) ^ bool(non_revoc_intervals.get(uuid)):
                             LOGGER.debug(f">>> uuid: {uuid}")
                             LOGGER.debug(
@@ -211,22 +249,35 @@ class AnonCredsVerifier:
                     msgs.append(f"{PresVerifyMsg.CT_UNREVEALED_ATTRIBUTES.value}::{uuid}")
                     LOGGER.debug(f"4Presentation msgs: {msgs}")
                 elif uuid not in self_attested:
+                    LOGGER.debug(
+                        f"[Indicio:Colton] failed to find self-attested attribute {uuid}"
+                    )
                     raise ValueError(
                         f"Presentation attributes mismatch requested attribute {uuid}"
                     )
 
             elif "names" in req_attr:
+                LOGGER.debug("[Indicio:Colton] found names in requested attributes")
                 group_spec = revealed_groups.get(uuid)
                 if (
                     group_spec is None
                     or "sub_proof_index" not in group_spec
                     or "values" not in group_spec
                 ):
+                    LOGGER.debug(
+                        f"[Indicio:Colton] missing requested attribute group {uuid}"
+                    )
                     raise ValueError(f"Missing requested attribute group {uuid}")
                 index = group_spec["sub_proof_index"]
                 if cred_defs[index].credential_definition.value.revocation:
                     timestamp = pres["identifiers"][index].get("timestamp")
+                    LOGGER.debug(
+                        f"[Indicio:Colton] checking timestamp for identifier {index}: {timestamp}"
+                    )
                     if (timestamp is not None) ^ bool(non_revoc_intervals.get(uuid)):
+                        LOGGER.debug(
+                            f"[Indicio:Colton] timestamp {timestamp} is {'superfluous' if timestamp else 'missing'}"
+                        )
                         raise ValueError(
                             f"Timestamp on sub-proof #{index} "
                             f"is {'superfluous' if timestamp else 'missing'} "
@@ -237,6 +288,9 @@ class AnonCredsVerifier:
                         < timestamp
                         < non_revoc_intervals[uuid].get("to", now)
                     ):
+                        LOGGER.debug(
+                            f"[Indicio:Colton] timestamp {timestamp} is outside non-revocation interval {non_revoc_intervals[uuid]}"
+                        )
                         msgs.append(
                             f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::{uuid}"
                         )
@@ -249,6 +303,9 @@ class AnonCredsVerifier:
 
         for uuid, req_pred in pres_req["requested_predicates"].items():
             pred_spec = preds.get(uuid)
+            LOGGER.debug(
+                f"[Indicio:Colton] checking requested predicate {uuid}: {req_pred}"
+            )
             if pred_spec is None or "sub_proof_index" not in pred_spec:
                 raise ValueError(
                     f"Presentation predicates mismatch requested predicate {uuid}"
@@ -276,6 +333,7 @@ class AnonCredsVerifier:
                         "from ledger falls outside non-revocation interval "
                         f"{non_revoc_intervals[uuid]}"
                     )
+        LOGGER.debug("[Indicio:Colton] finished checking timestamps")
         return msgs
 
     async def pre_verify(self, pres_req: dict, pres: dict) -> list:
@@ -289,6 +347,7 @@ class AnonCredsVerifier:
             pres: corresponding presentation
 
         """
+        LOGGER.debug("[Indicio:Colton] starting pre-verification")
         msgs = []
         if not (
             pres_req
@@ -372,6 +431,7 @@ class AnonCredsVerifier:
                     raise ValueError(f"Encoded representation mismatch for '{attr}'")
                 if primary_enco != encode(spec["raw"]):
                     raise ValueError(f"Encoded representation mismatch for '{attr}'")
+        LOGGER.debug("[Indicio:Colton] finished pre-verification")
         return msgs
 
     async def process_pres_identifiers(
@@ -456,12 +516,15 @@ class AnonCredsVerifier:
 
         msgs = []
         try:
+            LOGGER.debug("[Indicio:Colton] getting non-revocation intervals")
             msgs += self.non_revoc_intervals(pres_req, pres, credential_definitions)
             LOGGER.debug(f"8Presentation msgs: {msgs}")
+            LOGGER.debug("[Indicio:Colton] getting timestamps")
             msgs += await self.check_timestamps(
                 self.profile, pres_req, pres, rev_reg_defs
             )
             LOGGER.debug(f"9Presentation msgs: {msgs}")
+            LOGGER.debug("[Indicio:Colton] getting presentation pre-verification")
             msgs += await self.pre_verify(pres_req, pres)
             LOGGER.debug(f"10Presentation msgs: {msgs}")
         except ValueError as err:
@@ -475,7 +538,9 @@ class AnonCredsVerifier:
             return (False, msgs)
 
         try:
+            LOGGER.debug("[Indicio:Colton] loading presentation")
             presentation = Presentation.load(pres)
+            LOGGER.debug("[Indicio:Colton] running verification in executor")
             verified = await asyncio.get_event_loop().run_in_executor(
                 None,
                 presentation.verify,
@@ -499,6 +564,7 @@ class AnonCredsVerifier:
             )
             verified = False
 
+        LOGGER.debug(f"[Indicio:Colton] presentation verification complete: {verified}")
         return (verified, msgs)
 
     async def verify_presentation_w3c(

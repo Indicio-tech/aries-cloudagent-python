@@ -349,6 +349,7 @@ class AnonCredsPresExchangeHandler(V20PresFormatHandler):
         proof = pres_ex_record.pres.attachment(AnonCredsPresExchangeHandler.format)
         verifier = AnonCredsVerifier(self._profile)
 
+        LOGGER.debug("[Indicio:Colton] Processing identifiers")
         (
             schemas,
             cred_defs,
@@ -356,8 +357,10 @@ class AnonCredsPresExchangeHandler(V20PresFormatHandler):
             rev_lists,
         ) = await verifier.process_pres_identifiers(proof["identifiers"])
 
+        LOGGER.debug("[Indicio:Colton] Setting up verifier")
         verifier = AnonCredsVerifier(self._profile)
 
+        LOGGER.debug("[Indicio:Colton] verifying presentation")
         (verified, verified_msgs) = await verifier.verify_presentation(
             proof_request,
             proof,
@@ -365,6 +368,9 @@ class AnonCredsPresExchangeHandler(V20PresFormatHandler):
             cred_defs,
             rev_reg_defs,
             rev_lists,
+        )
+        LOGGER.debug(
+            f"[Indicio:Colton] Presentation verified: {verified}: {verified_msgs}"
         )
         pres_ex_record.verified = json.dumps(verified)
         pres_ex_record.verified_msgs = list(set(verified_msgs))
