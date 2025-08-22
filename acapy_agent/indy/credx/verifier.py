@@ -44,18 +44,26 @@ class IndyCredxVerifier(IndyVerifier):
             rev_reg_entries: revocation registry entries
         """
 
+        LOGGER.debug("[Indicio:Colton:Indy:CredX] <presentation_verification_started>")
         accept_legacy_revocation = (
             self.profile.settings.get("revocation.anoncreds_legacy_support", "accept")
             == "accept"
         )
         msgs = []
         try:
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] getting non-revocation intervals")
             msgs += self.non_revoc_intervals(pres_req, pres, credential_definitions)
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] msgs: %s", msgs)
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] checking timestamps")
             msgs += await self.check_timestamps(
                 self.profile, pres_req, pres, rev_reg_defs
             )
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] msgs: %s", msgs)
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] pre-verifying")
             msgs += await self.pre_verify(pres_req, pres)
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] msgs: %s", msgs)
         except ValueError as err:
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] Value Error detected: %s", str(err))
             s = str(err)
             msgs.append(f"{PresVerifyMsg.PRES_VALUE_ERROR.value}::{s}")
             LOGGER.error(
@@ -66,7 +74,9 @@ class IndyCredxVerifier(IndyVerifier):
             return (False, msgs)
 
         try:
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] loading presentation")
             presentation = Presentation.load(pres)
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] verifying presentation")
             verified = await asyncio.get_event_loop().run_in_executor(
                 None,
                 presentation.verify,
@@ -77,7 +87,11 @@ class IndyCredxVerifier(IndyVerifier):
                 rev_reg_entries,
                 accept_legacy_revocation,
             )
+            LOGGER.debug(
+                "[Indicio:Colton:Indy:CredX] presentation verified: %s", verified
+            )
         except CredxError as err:
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] CredxError detected: %s", str(err))
             s = str(err)
             msgs.append(f"{PresVerifyMsg.PRES_VERIFY_ERROR.value}::{s}")
             LOGGER.exception(
@@ -86,4 +100,5 @@ class IndyCredxVerifier(IndyVerifier):
             )
             verified = False
 
+        LOGGER.debug("[Indicio:Colton:Indy:CredX] verified: %s, msgs: %s", verified, msgs)
         return (verified, msgs)
