@@ -123,6 +123,7 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
         """
         msgs = []
         now = int(time())
+        LOGGER.debug("[Indicio:Colton:Indy] Checking timestamps")
         non_revoc_intervals = indy_proof_req2non_revoc_intervals(pres_req)
         LOGGER.debug(f">>> got non-revoc intervals: {non_revoc_intervals}")
         # timestamp for irrevocable credential
@@ -143,9 +144,16 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
             )[1]
             async with ledger:
                 cred_def = await ledger.get_credential_definition(cred_def_id)
+            LOGGER.debug(f"[Indicio:Colton:Indy] Got credential definition: {cred_def}")
             cred_defs.append(cred_def)
             if ident.get("timestamp"):
+                LOGGER.debug(
+                    f"[Indicio:Colton:Indy] Checking timestamp for identifier #{index}: {ident['timestamp']}"
+                )
                 if not cred_def["value"].get("revocation"):
+                    LOGGER.debug(
+                        f"[Indicio:Colton:Indy] {cred_def['value']} is not revocable"
+                    )
                     raise ValueError(
                         f"Timestamp in presentation identifier #{index} "
                         f"for irrevocable cred def id {cred_def_id}"
@@ -155,20 +163,36 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
         for ident in pres["identifiers"]:
             timestamp = ident.get("timestamp")
             rev_reg_id = ident.get("rev_reg_id")
+            LOGGER.debug(
+                f"[Indicio:Colton:Indy] Checking timestamp for identifier #{index}: {timestamp}"
+            )
 
             if not timestamp:
                 continue
 
             if timestamp > now + 300:  # allow 5 min for clock skew
+                LOGGER.debug(
+                    f"[Indicio:Colton:Indy] Timestamp {timestamp} is in the future"
+                )
                 raise ValueError(f"Timestamp {timestamp} is in the future")
             reg_def = rev_reg_defs.get(rev_reg_id)
+            LOGGER.debug(f"[Indicio:Colton:Indy] Checking registry definition {rev_reg}")
             if not reg_def:
+                LOGGER.debug(
+                    f"[Indicio:Colton:Indy] Missing registry definition for {rev_reg_id}"
+                )
                 raise ValueError(f"Missing registry definition for '{rev_reg_id}'")
             if "txnTime" not in reg_def:
+                LOGGER.debug(
+                    f"[Indicio:Colton:Indy] Missing txnTime for registry definition '{rev_reg_id}'"
+                )
                 raise ValueError(
                     f"Missing txnTime for registry definition '{rev_reg_id}'"
                 )
             if timestamp < reg_def["txnTime"]:
+                LOGGER.debug(
+                    f"[Indicio:Colton:Indy] Timestamp {timestamp} predates rev reg {rev_reg_id} creation"
+                )
                 raise ValueError(
                     f"Timestamp {timestamp} predates rev reg {rev_reg_id} creation"
                 )
@@ -180,11 +204,20 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
         self_attested = pres["requested_proof"].get("self_attested_attrs", {})
         preds = pres["requested_proof"].get("predicates", {})
         for uuid, req_attr in pres_req["requested_attributes"].items():
+            LOGGER.debug(
+                f"[Indicio:Colton:Indy] Checking requested attribute {uuid}: {req_attr}"
+            )
             if "name" in req_attr:
                 if uuid in revealed_attrs:
+                    LOGGER.debug(
+                        f"[Indicio:Colton:Indy] Checking revealed attribute {uuid}: {revealed_attrs[uuid]}"
+                    )
                     index = revealed_attrs[uuid]["sub_proof_index"]
                     if cred_defs[index]["value"].get("revocation"):
                         timestamp = pres["identifiers"][index].get("timestamp")
+                        LOGGER.debug(
+                            f"[Indicio:Colton:Indy] Checking timestamp for identifier #{index}: {timestamp}"
+                        )
                         if (timestamp is not None) ^ bool(non_revoc_intervals.get(uuid)):
                             LOGGER.debug(f">>> uuid: {uuid}")
                             LOGGER.debug(
@@ -200,6 +233,9 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                             < timestamp
                             < non_revoc_intervals[uuid].get("to", now)
                         ):
+                            LOGGER.debug(
+                                f"[Indicio:Colton:Indy] Timestamp {timestamp} is outside non-revocation interval {non_revoc_intervals[uuid]}"
+                            )
                             msgs.append(
                                 f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::"
                                 f"{uuid}"
@@ -210,9 +246,11 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                                 f"{non_revoc_intervals[uuid]}"
                             )
                 elif uuid in unrevealed_attrs:
+                    LOGGER.debug("[Indicio:Colton:Indy] attribute is not revealed")
                     # nothing to do, attribute value is not revealed
                     msgs.append(f"{PresVerifyMsg.CT_UNREVEALED_ATTRIBUTES.value}::{uuid}")
                 elif uuid not in self_attested:
+                    LOGGER.debug("[Indicio:Colton:Indy] attribute is self-attested")
                     raise ValueError(
                         f"Presentation attributes mismatch requested attribute {uuid}"
                     )
@@ -224,11 +262,20 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                     or "sub_proof_index" not in group_spec
                     or "values" not in group_spec
                 ):
+                    LOGGER.debug(
+                        f"[Indicio:Colton:Indy] Missing requested attribute group {uuid}"
+                    )
                     raise ValueError(f"Missing requested attribute group {uuid}")
                 index = group_spec["sub_proof_index"]
                 if cred_defs[index]["value"].get("revocation"):
                     timestamp = pres["identifiers"][index].get("timestamp")
+                    LOGGER.debug(
+                        f"[Indicio:Colton:Indy] Checking timestamp for identifier #{index}: {timestamp}"
+                    )
                     if (timestamp is not None) ^ bool(non_revoc_intervals.get(uuid)):
+                        LOGGER.debug(
+                            f"[Indicio:Colton:Indy] Timestamp {timestamp} is {'superfluous' if timestamp else 'missing'} vs. requested attribute group {uuid}"
+                        )
                         raise ValueError(
                             f"Timestamp on sub-proof #{index} "
                             f"is {'superfluous' if timestamp else 'missing'} "
@@ -239,6 +286,9 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                         < timestamp
                         < non_revoc_intervals[uuid].get("to", now)
                     ):
+                        LOGGER.debug(
+                            f"[Indicio:Colton:Indy] Timestamp {timestamp} is outside non-revocation interval {non_revoc_intervals[uuid]}"
+                        )
                         msgs.append(
                             f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::{uuid}"
                         )
@@ -249,6 +299,9 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                         )
 
         for uuid, req_pred in pres_req["requested_predicates"].items():
+            LOGGER.debug(
+                f"[Indicio:Colton:Indy] Checking requested predicate {uuid}: {req_pred}"
+            )
             pred_spec = preds.get(uuid)
             if pred_spec is None or "sub_proof_index" not in pred_spec:
                 raise ValueError(
@@ -276,6 +329,9 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                         "from ledger falls outside non-revocation interval "
                         f"{non_revoc_intervals[uuid]}"
                     )
+        LOGGER.debug(
+            f"[Indicio:Colton:Indy] Finished verifying presentation request {pres_req['id']}"
+        )
         return msgs
 
     async def pre_verify(self, pres_req: dict, pres: dict) -> list:
