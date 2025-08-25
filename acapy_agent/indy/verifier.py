@@ -256,7 +256,12 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                     )
 
             elif "names" in req_attr:
+                LOGGER.debug(
+                    "[Indicio:Colton:Indy] Checking requested attribute group %s", uuid
+                )
+                LOGGER.debug(f">>> revealed_groups: {revealed_groups}")
                 group_spec = revealed_groups.get(uuid)
+                LOGGER.debug(f">>> group_spec: {group_spec}")
                 if (
                     group_spec is None
                     or "sub_proof_index" not in group_spec
@@ -267,6 +272,7 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                     )
                     raise ValueError(f"Missing requested attribute group {uuid}")
                 index = group_spec["sub_proof_index"]
+                LOGGER.debug(f">>> index: {index}")
                 if cred_defs[index]["value"].get("revocation"):
                     timestamp = pres["identifiers"][index].get("timestamp")
                     LOGGER.debug(
@@ -330,7 +336,7 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                         f"{non_revoc_intervals[uuid]}"
                     )
         LOGGER.debug(
-            f"[Indicio:Colton:Indy] Finished verifying presentation request {pres_req['id']}"
+            f"[Indicio:Colton:Indy] Finished verifying presentation request {pres_req}"
         )
         return msgs
 
