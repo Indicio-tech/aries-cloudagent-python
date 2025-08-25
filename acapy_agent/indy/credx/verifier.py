@@ -72,6 +72,16 @@ class IndyCredxVerifier(IndyVerifier):
                 f": {str(err)}"
             )
             return (False, msgs)
+        except Exception as err:
+            LOGGER.debug("[Indicio:Colton:Indy:CredX] Exception detected: %s", str(err))
+            s = str(err)
+            msgs.append(f"{PresVerifyMsg.PRES_VERIFY_ERROR.value}::{s}")
+            LOGGER.error(
+                f"Presentation on nonce={pres_req['nonce']} "
+                f"cannot be validated (presentation will be marked as Invalid)"
+                f": {str(err)}"
+            )
+            raise err
 
         try:
             LOGGER.debug("[Indicio:Colton:Indy:CredX] loading presentation")
