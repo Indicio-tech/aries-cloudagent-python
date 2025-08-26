@@ -176,7 +176,7 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                 )
                 raise ValueError(f"Timestamp {timestamp} is in the future")
             reg_def = rev_reg_defs.get(rev_reg_id)
-            LOGGER.debug(f"[Indicio:Colton:Indy] Checking registry definition {rev_reg}")
+            LOGGER.debug(f"[Indicio:Colton:Indy] Checking registry definition {reg_def}")
             if not reg_def:
                 LOGGER.debug(
                     f"[Indicio:Colton:Indy] Missing registry definition for {rev_reg_id}"
