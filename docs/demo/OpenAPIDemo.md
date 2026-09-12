@@ -49,11 +49,11 @@ What better way to learn about controllers than by actually being one yourself! 
 
 We will get started by opening three browser tabs that will be used throughout the lab. Two will be Swagger UIs for the Faber and Alice agent and one for the public ledger (showing the Hyperledger Indy ledger). As well, we'll keep the terminal sessions where we started the demos handy, as we'll be grabbing information from them as well.
 
-Let's start with the ledger browser. For this demo, we're going to use an open public ledger operated by the BC Government's VON Team. In your first browser tab, go to: [http://test.bcovrin.vonx.io](http://test.bcovrin.vonx.io). This will be called the "ledger tab" in the instructions below.
+Let's start with the ledger browser. For this demo, we're going to use an open public ledger operated by the BC Government's VON Team. In your first browser tab, go to: [https://test.bcovrin.vonx.io](https://test.bcovrin.vonx.io). This will be called the "ledger tab" in the instructions below.
 
 For the rest of the set up, you can choose to run the terminal sessions in your browser (no local resources needed), or you can run it in Docker on your local system. Your choice, each is covered in the next two sections.
 
-> Note: In the following, when we start the agents we use several special demo settings. The command we use is this: `LEDGER_URL=http://test.bcovrin.vonx.io ./run_demo faber --events --no-auto --bg`. In that:
+> Note: In the following, when we start the agents we use several special demo settings. The command we use is this: `LEDGER_URL=https://test.bcovrin.vonx.io ./run_demo faber --events --no-auto --bg`. In that:
 > 
 > - The `LEDGER_URL` environment variable informs the agent what ledger to use.
 > - The `--events` option indicates that we want the controller to display the webhook events from ACA-Py in the log displayed on the terminal.
@@ -62,7 +62,7 @@ For the rest of the set up, you can choose to run the terminal sessions in your 
 
 ## Running in a Browser
 
-To run the necessary terminal sessions in your browser, go to the Docker playground service [Play with Docker](https://labs.play-with-docker.com/). Don't know about Play with Docker? Check [this out](https://github.com/cloudcompass/ToIPLabs/blob/master/docs/LFS173x/RunningLabs.md#running-on-play-with-docker) to learn more.
+To run the necessary terminal sessions in your browser, go to the Docker playground service [Play with Docker](https://labs.play-with-docker.com/). Don't know about Play with Docker? Check [this out](https://github.com/cloudcompass/ToIPLabs/blob/main/docs/LFS173x/RunningLabs.md#running-on-play-with-docker) to learn more.
 
 ### Start the Faber Agent
 
@@ -71,7 +71,7 @@ In a browser, go to the [Play with Docker](https://labs.play-with-docker.com/) h
 ```bash
 git clone https://github.com/openwallet-foundation/acapy
 cd acapy/demo
-LEDGER_URL=http://test.bcovrin.vonx.io ./run_demo faber --events --no-auto --bg
+LEDGER_URL=https://test.bcovrin.vonx.io ./run_demo faber --events --no-auto --bg
 
 ```
 
@@ -99,7 +99,7 @@ Now to start Alice's agent. Click the "+Add a new instance" button again to open
 ```bash
 git clone https://github.com/openwallet-foundation/acapy
 cd acapy/demo
-LEDGER_URL=http://test.bcovrin.vonx.io ./run_demo alice --events --no-auto --bg
+LEDGER_URL=https://test.bcovrin.vonx.io ./run_demo alice --events --no-auto --bg
 
 ```
 
@@ -126,7 +126,7 @@ You are ready to go. Skip down to the [Using the OpenAPI/Swagger User Interface]
 
 ## Running in Docker
 
-To run the demo on your local system, you must have git, a running Docker installation, and terminal windows running bash. Need more information about getting set up? Click [here](https://github.com/cloudcompass/ToIPLabs/blob/master/docs/LFS173x/RunningLabs.md#running-on-docker-locally) to learn more.
+To run the demo on your local system, you must have git, a running Docker installation, and terminal windows running bash. Need more information about getting set up? Click [here](https://github.com/cloudcompass/ToIPLabs/blob/main/docs/LFS173x/RunningLabs.md#running-on-docker-locally) to learn more.
 
 ### Start the Faber Agent
 
@@ -137,7 +137,7 @@ In the first terminal window, clone the ACA-Py repo, change into the demo folder
 ```bash
 git clone https://github.com/openwallet-foundation/acapy
 cd acapy/demo
-LEDGER_URL=http://test.bcovrin.vonx.io ./run_demo faber --events --no-auto --bg
+LEDGER_URL=https://test.bcovrin.vonx.io ./run_demo faber --events --no-auto --bg
 
 ```
 
@@ -163,7 +163,7 @@ If all goes well, the agent will show a message indicating it is running. Use th
 To start Alice's agent, open up a second terminal window and in it, change to the same `demo` directory as where Faber's agent was started above. Once there, start Alice's agent:
 
 ``` bash
-LEDGER_URL=http://test.bcovrin.vonx.io ./run_demo alice --events --no-auto --bg
+LEDGER_URL=https://test.bcovrin.vonx.io ./run_demo alice --events --no-auto --bg
 
 ```
 
@@ -346,7 +346,7 @@ You are connected! Switch to the Faber browser tab and run the same **`GET /conn
 
 ## Basic Messaging Between Agents
 
-Once you have a connection between two agents, you have a channel to exchange secure, encrypted messages. In fact these underlying encrypted messages (similar to envelopes in a postal system) enable the delivery of messages that form the higher level protocols, such as issuing Credentials and providing Proofs. So, let's send a couple of messages that contain the simplest of context&mdash;text. For this we wil use the Basic Message protocol, [Aries RFC 0095](https://github.com/hyperledger/aries-rfcs/tree/master/features/0095-basic-message).
+Once you have a connection between two agents, you have a channel to exchange secure, encrypted messages. In fact these underlying encrypted messages (similar to envelopes in a postal system) enable the delivery of messages that form the higher level protocols, such as issuing Credentials and providing Proofs. So, let's send a couple of messages that contain the simplest of context&mdash;text. For this we wil use the Basic Message protocol, [Aries RFC 0095](https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0095-basic-message).
 
 ### Sending a message from Alice to Faber
 
@@ -404,7 +404,7 @@ You can confirm the schema and credential definition were published by going bac
     <img src="collateral/C-1-Faber-DID-Public.png" alt="Faber Public DID">
 </details>
 
-On the ledger browser of the [BCovrin ledger](http://test.bcovrin.vonx.io), click the `Domain` page, refresh, and paste the Faber public DID into the `Filter:` field:
+On the ledger browser of the [BCovrin ledger](https://test.bcovrin.vonx.io), click the `Domain` page, refresh, and paste the Faber public DID into the `Filter:` field:
 
 <details>
     <summary>Show me a screenshot</summary>

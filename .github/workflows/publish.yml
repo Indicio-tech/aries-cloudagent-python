@@ -23,15 +23,12 @@ on:
         required: false
         type: string
 
-permissions:
-  contents: read
-
 jobs:
   build-image:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.13"]
         arch: ["amd64", "arm64"]
         include:
           - arch: amd64
@@ -46,20 +43,20 @@ jobs:
       packages: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ inputs.ref || '' }}
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
         with:
           cache-binary: false
           install: true
           version: latest
 
       - name: Build and Cache Image
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           push: false
           context: .
@@ -75,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.13"]
         image-type: ["standard", "bbs"]
         include:
           - image-type: standard
@@ -101,20 +98,20 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ inputs.ref || '' }}
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
         with:
           cache-binary: false
           install: true
           version: latest
 
       - name: Log in to the GitHub Container Registry
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -125,17 +122,49 @@ jobs:
         id: lower
         run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
 
+      - name: Check if Highest Semantic Version
+        id: check_latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          # Skip if this is an RC release
+          if [[ "$CURRENT_TAG" =~ rc ]]; then
+            echo "is_latest=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping latest tag for RC release"
+            exit 0
+          fi
+          
+          # Get all non-RC release tags and sort by semantic version
+          HIGHEST_TAG=$(gh api /repos/${{ github.repository }}/releases --paginate \
+            | jq -r '[.[] | select(.prerelease == false and (.tag_name | test("rc") | not)) | .tag_name] | .[]' \
+            | sort -V | tail -1)
+          
+          echo "Current tag: $CURRENT_TAG"
+          echo "Highest semantic version: $HIGHEST_TAG"
+          
+          if [ "$CURRENT_TAG" == "$HIGHEST_TAG" ]; then
+            echo "is_latest=true" >> "$GITHUB_OUTPUT"
+            echo "This is the highest semantic version - will tag as latest"
+          else
+            echo "is_latest=false" >> "$GITHUB_OUTPUT"
+            echo "Not the highest semantic version - skipping latest tag"
+          fi
+
       - name: Setup Image Metadata
         id: meta
-        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: |
             ghcr.io/${{ steps.lower.outputs.owner }}/${{ matrix.image-name }}
           tags: |
             type=raw,value=py${{ matrix.python-version }}-${{ inputs.tag || github.event.release.tag_name }}
+            type=semver,pattern={{version}},value=${{ inputs.tag || github.event.release.tag_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag || github.event.release.tag_name }},enable=${{ !contains(github.event.release.tag_name || inputs.tag, 'rc') }}
+            type=raw,value=latest,enable=${{ steps.check_latest.outputs.is_latest == 'true' }}
 
       - name: Publish Image to GHCR.io
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           push: true
           context: .

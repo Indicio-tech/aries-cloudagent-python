@@ -1,0 +1,8 @@
+# LTS Version Patterns
+# Each line represents a version pattern that should be treated as LTS
+# Format: major.minor:python_version (e.g., 1.2:3.12 for versions 1.2.x built with Python 3.12)
+# Lines starting with # are comments and will be ignored
+# Empty lines are ignored
+
+1.3:3.12
+1.6:3.13

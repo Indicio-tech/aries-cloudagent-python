@@ -44,6 +44,7 @@ def load_resource(path: str, encoding: Optional[str] = None):
 
     Returns:
         file-like object: A file-like object representing the resource
+
     """
     components = path.rsplit(":", 1)
     try:
@@ -132,7 +133,6 @@ class LoggingConfigurator:
         :param multitenant: bool: (Default value = False) Optional flag if multitenant is
             enabled
         """
-
         write_to_log_file = log_file is not None or log_file == ""
 
         if multitenant:
@@ -284,6 +284,7 @@ class LoggingConfigurator:
             banner_length: (Default value = 40) Length of the banner
             border_character: (Default value = ":") Character to use in banner
             border
+
         """
         with Banner(border=border_character, length=banner_length) as banner:
             # Title
@@ -376,13 +377,15 @@ class LoggingConfigurator:
                 )
                 banner.hr()
                 banner.print(
-                    "Aries RFC 0036: Issue Credential 1.0 is deprecated "
-                    "and support will be removed in a future release; "
-                    "use RFC 0453: Issue Credential 2.0 instead."
+                    "Aries RFC 0036: Issue Credential 1.0 has been removed "
+                    "from ACA-Py core. To continue using this protocol, "
+                    "enable the issue-credential plugin from "
+                    "https://github.com/openwallet-foundation/acapy-plugins"
                 )
                 banner.hr()
                 banner.print(
-                    "Aries RFC 0037: Present Proof 1.0 is deprecated "
-                    "and support will be removed in a future release; "
-                    "use RFC 0454: Present Proof 2.0 instead."
+                    "Aries RFC 0037: Present Proof 1.0 has been removed "
+                    "from ACA-Py core. To continue using this protocol, "
+                    "enable the present-proof plugin from "
+                    "https://github.com/openwallet-foundation/acapy-plugins"
                 )

@@ -16,6 +16,7 @@ See the [README](../../README.md) for details about this repository and informat
   - [Mediation](#mediation)
   - [Multi-tenancy](#multi-tenancy)
   - [JSON-LD Credentials](#json-ld-credentials)
+  - [Kanon Storage](#kanon-storage)
 - [Developing](#developing)
   - [Prerequisites](#prerequisites)
   - [Running In A Dev Container](#running-in-a-dev-container)
@@ -59,7 +60,7 @@ variable:
 
 For a comprehensive list of all arguments, argument groups, CLI args, and their environment variable equivalents, please
 see
-the [argparse.py](https://github.com/openwallet-foundation/acapy/blob/main/aries_cloudagent/config/argparse.py)
+the [argparse.py](https://github.com/openwallet-foundation/acapy/blob/main/acapy_agent/config/argparse.py)
 file.
 
 
@@ -71,6 +72,16 @@ settings can be managed using any combination of the three methods (command line
 parameters override environment variables override YAML). Use the `--help`
 option to discover the available command line parameters. There are a lot of
 them--for good and bad.
+
+YAML configuration files can be loaded from either local file paths or remote URLs using the `--arg-file` parameter:
+
+```bash
+# Local file
+aca-py start --arg-file /path/to/config.yml
+
+# Remote URL
+aca-py start --arg-file https://example.com/config.yml
+```
 
 ### Docker
 
@@ -126,7 +137,7 @@ aca-py start    --inbound-transport http 0.0.0.0 8000 \
                 --outbound-transport http
 ```
 
-ACA-Py ships with both inbound and outbound transport drivers for `http` and `ws` (websockets). Additional transport drivers can be added as pluggable implementations. See the existing implementations in the [transports module](https://github.com/openwallet-foundation/acapy/tree/main/aries_cloudagent/transport) for getting started on adding a new transport.
+ACA-Py ships with both inbound and outbound transport drivers for `http` and `ws` (websockets). Additional transport drivers can be added as pluggable implementations. See the existing implementations in the [transports module](https://github.com/openwallet-foundation/acapy/tree/main/acapy_agent/transport) for getting started on adding a new transport.
 
 Most configuration parameters are provided to the agent at startup. Refer to the `Running` sections above for details on listing the available command line parameters.
 
@@ -155,6 +166,10 @@ ACA-Py can also be started in multi-tenant mode. This allows the agent to serve 
 ### JSON-LD Credentials
 
 ACA-Py can issue W3C Verifiable Credentials using Linked Data Proofs. See the [docs on JSON-LD Credentials](./JsonLdCredentials.md) for more info.
+
+### Kanon Storage
+
+Askar encrypts data at rest using an application-managed encryption scheme instead of database-controlled encryption. Kanon Storage provides the option to use database-managed encryption at rest. Records are stored as plaintext at the database layer, with encryption-at-rest managed by the database; ACA-Py does not apply application-layer encryption to these records. Kanon Storage uses a normalized schema, allowing connections and credential data to be queried with standard SQL. See the [docs on Kanon Storage](./KanonStorage.md) for more info.
 
 ## Developing
 
@@ -224,23 +239,23 @@ To run the ACA-Py test suite with ptvsd debugger enabled:
 To run specific tests pass parameters as defined by [pytest](https://docs.pytest.org/en/stable/usage.html#specifying-tests-selecting-tests):
 
 ```bash
-./scripts/run_tests aries_cloudagent/protocols/connections
+./scripts/run_tests acapy_agent/protocols/connections
 ```
 
 ### Running Aries Agent Test Harness Tests
 
-You can run a full suite of integration tests using the [Aries Agent Test Harness (AATH)](https://github.com/hyperledger/aries-agent-test-harness).
+You can run a full suite of integration tests using the [Aries Agent Test Harness (AATH)](https://github.com/openwallet-foundation/owl-agent-test-harness).
 
 Check out and run AATH tests as follows (this tests the aca-py `main` branch):
 
 ```bash
-git clone https://github.com/hyperledger/aries-agent-test-harness.git
+git clone https://github.com/openwallet-foundation/owl-agent-test-harness.git
 cd aries-agent-test-harness
 ./manage build -a acapy-main
 ./manage run -d acapy-main -t @AcceptanceTest -t ~@wip
 ```
 
-The `manage` script is described in detail [here](https://github.com/hyperledger/aries-agent-test-harness#the-manage-bash-script), including how to modify the AATH code to run the tests against your aca-py repo/branch.
+The `manage` script is described in detail [here](https://github.com/openwallet-foundation/owl-agent-test-harness#the-manage-bash-script), including how to modify the AATH code to run the tests against your aca-py repo/branch.
 
 ## Development Workflow
 
@@ -266,4 +281,4 @@ The Agent employs a dynamic injection system whereby providers of base classes a
 
 Providers are registered with either `context.injector.bind_instance(BaseClass, instance)` for previously-constructed (singleton) object instances, or `context.injector.bind_provider(BaseClass, provider)` for dynamic providers. In some cases it may be desirable to write a custom provider which switches implementations based on configuration settings, such as the wallet provider.
 
-The `BaseProvider` classes in the `config.provider` module include `ClassProvider`, which can perform dynamic module inclusion when given the combined module and class name as a string (for instance `aries_cloudagent.wallet.indy.IndyWallet`). `ClassProvider` accepts additional positional and keyword arguments to be passed into the class constructor. Any of these arguments may be an instance of `ClassProvider.Inject(BaseClass)`, allowing dynamic injection of dependencies when the class instance is instantiated.
+The `BaseProvider` classes in the `config.provider` module include `ClassProvider`, which can perform dynamic module inclusion when given the combined module and class name as a string (for instance `acapy_agent.wallet.indy.IndyWallet`). `ClassProvider` accepts additional positional and keyword arguments to be passed into the class constructor. Any of these arguments may be an instance of `ClassProvider.Inject(BaseClass)`, allowing dynamic injection of dependencies when the class instance is instantiated.

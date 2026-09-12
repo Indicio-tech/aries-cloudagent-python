@@ -7,6 +7,15 @@ from typing import Optional
 
 from uuid_utils import uuid4
 
+from acapy_agent.ledger.merkel_validation.constants import (
+    ATTRIB,
+    CLAIM_DEF,
+    NYM,
+    REVOC_REG_DEF,
+    REVOC_REG_ENTRY,
+    SCHEMA,
+)
+
 from ....anoncreds.issuer import AnonCredsIssuer
 from ....anoncreds.revocation import AnonCredsRevocation
 from ....connections.models.conn_record import ConnRecord
@@ -47,6 +56,7 @@ class TransactionManager:
 
         Args:
             profile: The profile instance for this transaction manager
+
         """
         self._profile = profile
         self._logger = logging.getLogger(__name__)
@@ -75,7 +85,6 @@ class TransactionManager:
             The transaction Record
 
         """
-
         messages_attach_dict = {
             "@id": str(uuid4()),
             "mime-type": "application/json",
@@ -144,7 +153,6 @@ class TransactionManager:
                 'STATE_TRANSACTION_CREATED' state.
 
         """
-
         if transaction.state != TransactionRecord.STATE_TRANSACTION_CREATED:
             raise TransactionManagerError(
                 f"Cannot create a request for transaction record"
@@ -195,8 +203,8 @@ class TransactionManager:
         Args:
             request: A Transaction Request
             connection_id: The connection id related to this transaction record
-        """
 
+        """
         transaction = TransactionRecord()
 
         transaction._type = TransactionRecord.SIGNATURE_REQUEST
@@ -240,7 +248,6 @@ class TransactionManager:
             The updated transaction and an endorsed response
 
         """
-
         if transaction.state not in (
             TransactionRecord.STATE_REQUEST_RECEIVED,
             TransactionRecord.STATE_TRANSACTION_RESENT_RECEIVED,
@@ -366,8 +373,8 @@ class TransactionManager:
 
         Args:
             response: The Endorsed Transaction Response
-        """
 
+        """
         async with self._profile.session() as session:
             transaction = await TransactionRecord.retrieve_by_id(
                 session, response.transaction_id
@@ -415,7 +422,6 @@ class TransactionManager:
             The updated transaction
 
         """
-
         ledger_transaction = transaction.messages_attach[0]["data"]["json"]
 
         # check our goal code!
@@ -432,9 +438,9 @@ class TransactionManager:
             ledger = self.profile.inject(BaseLedger)
             if not ledger:
                 raise TransactionManagerError("No ledger available")
-            if (
-                self._profile.context.settings.get_value("wallet.type")
-                == "askar-anoncreds"
+            if self._profile.context.settings.get_value("wallet.type") in (
+                "askar-anoncreds",
+                "kanon-anoncreds",
             ):
                 from acapy_agent.anoncreds.default.legacy_indy.registry import (
                     LegacyIndyRegistry,
@@ -512,8 +518,8 @@ class TransactionManager:
         Args:
             response: The transaction acknowledgement
             connection_id: The connection_id related to this Transaction Record
-        """
 
+        """
         async with self._profile.session() as session:
             transaction = await TransactionRecord.retrieve_by_connection_and_thread(
                 session, connection_id, response.thread_id
@@ -578,7 +584,6 @@ class TransactionManager:
             The updated transaction and the refused response
 
         """
-
         if transaction.state not in (
             TransactionRecord.STATE_REQUEST_RECEIVED,
             TransactionRecord.STATE_TRANSACTION_RESENT_RECEIVED,
@@ -619,8 +624,8 @@ class TransactionManager:
 
         Args:
             response: The refused transaction response
-        """
 
+        """
         async with self._profile.session() as session:
             transaction = await TransactionRecord.retrieve_by_id(
                 session, response.transaction_id
@@ -649,7 +654,6 @@ class TransactionManager:
             The updated transaction and the cancelled transaction response
 
         """
-
         if transaction.state not in (
             TransactionRecord.STATE_REQUEST_SENT,
             TransactionRecord.STATE_TRANSACTION_RESENT,
@@ -677,8 +681,8 @@ class TransactionManager:
         Args:
             response: The cancel transaction response
             connection_id: The connection_id related to this Transaction Record
-        """
 
+        """
         async with self._profile.session() as session:
             transaction = await TransactionRecord.retrieve_by_connection_and_thread(
                 session, connection_id, response.thread_id
@@ -701,7 +705,6 @@ class TransactionManager:
             The updated transaction and the resend response
 
         """
-
         if transaction.state not in (
             TransactionRecord.STATE_TRANSACTION_REFUSED,
             TransactionRecord.STATE_TRANSACTION_CANCELLED,
@@ -730,8 +733,8 @@ class TransactionManager:
         Args:
             response: The Resend transaction response
             connection_id: The connection_id related to this Transaction Record
-        """
 
+        """
         async with self._profile.session() as session:
             transaction = await TransactionRecord.retrieve_by_connection_and_thread(
                 session, connection_id, response.thread_id
@@ -754,7 +757,6 @@ class TransactionManager:
             The transaction job that is send to other agent
 
         """
-
         async with self._profile.session() as session:
             value = await record.metadata_get(session, "transaction_jobs")
             if value:
@@ -775,8 +777,8 @@ class TransactionManager:
         Args:
             tx_job_received: The transaction job that is received from the other agent
             connection: connection to set metadata on
-        """
 
+        """
         try:
             async with self._profile.session() as session:
                 value = await connection.metadata_get(session, "transaction_jobs")
@@ -803,8 +805,8 @@ class TransactionManager:
                          would be stored in wallet.
             ledger_response: The ledger response
             connection_record: The connection record
-        """
 
+        """
         if isinstance(ledger_response, str):
             ledger_response = json.loads(ledger_response)
 
@@ -820,14 +822,18 @@ class TransactionManager:
         meta_data["endorser"] = {
             "connection_id": transaction.connection_id,
         }
-
-        is_anoncreds = self._profile.settings.get("wallet.type") == "askar-anoncreds"
+        is_anoncreds = self._profile.settings.get("wallet.type") in (
+            "askar-anoncreds",
+            "kanon-anoncreds",
+        )
 
         # write the wallet non-secrets record
-        if ledger_response["result"]["txn"]["type"] == "101":
+        txn = ledger_response["result"]["txn"]
+        txn_type = txn["type"]
+        if txn_type == SCHEMA:
             # schema transaction
             schema_id = ledger_response["result"]["txnMetadata"]["txnId"]
-            public_did = ledger_response["result"]["txn"]["metadata"]["from"]
+            public_did = txn["metadata"]["from"]
             meta_data["context"]["schema_id"] = schema_id
             meta_data["context"]["public_did"] = public_did
 
@@ -840,18 +846,18 @@ class TransactionManager:
             else:
                 await notify_schema_event(self._profile, schema_id, meta_data)
 
-        elif ledger_response["result"]["txn"]["type"] == "102":
+        elif txn_type == CLAIM_DEF:
             # cred def transaction
             async with ledger:
                 try:
-                    schema_seq_no = str(ledger_response["result"]["txn"]["data"]["ref"])
+                    schema_seq_no = str(txn["data"]["ref"])
                     schema_response = await shield(ledger.get_schema(schema_seq_no))
                 except (IndyIssuerError, LedgerError) as err:
                     raise TransactionManagerError(err.roll_up) from err
 
             schema_id = schema_response["id"]
             cred_def_id = ledger_response["result"]["txnMetadata"]["txnId"]
-            issuer_did = ledger_response["result"]["txn"]["metadata"]["from"]
+            issuer_did = txn["metadata"]["from"]
             meta_data["context"]["schema_id"] = schema_id
             meta_data["context"]["cred_def_id"] = cred_def_id
             meta_data["context"]["issuer_did"] = issuer_did
@@ -866,7 +872,7 @@ class TransactionManager:
             else:
                 await notify_cred_def_event(self._profile, cred_def_id, meta_data)
 
-        elif ledger_response["result"]["txn"]["type"] == "113":
+        elif txn_type == REVOC_REG_DEF:
             # revocation registry transaction
             rev_reg_id = ledger_response["result"]["txnMetadata"]["txnId"]
             meta_data["context"]["rev_reg_id"] = rev_reg_id
@@ -883,10 +889,10 @@ class TransactionManager:
                     self._profile, rev_reg_id, meta_data
                 )
 
-        elif ledger_response["result"]["txn"]["type"] == "114":
+        elif txn_type == REVOC_REG_ENTRY:
             # revocation entry transaction
-            rev_reg_id = ledger_response["result"]["txn"]["data"]["revocRegDefId"]
-            revoked = ledger_response["result"]["txn"]["data"]["value"].get("revoked", [])
+            rev_reg_id = txn["data"]["revocRegDefId"]
+            revoked = txn["data"]["value"].get("revoked", [])
             meta_data["context"]["rev_reg_id"] = rev_reg_id
             if is_anoncreds:
                 await AnonCredsRevocation(self._profile).finish_revocation_list(
@@ -897,16 +903,15 @@ class TransactionManager:
                     self._profile, rev_reg_id, meta_data, revoked
                 )
 
-        elif ledger_response["result"]["txn"]["type"] == "1":
+        elif txn_type == NYM:
             # write DID to ledger
-            did = ledger_response["result"]["txn"]["data"]["dest"]
+            did = txn["data"]["dest"]
             await notify_endorse_did_event(self._profile, did, meta_data)
 
-        elif ledger_response["result"]["txn"]["type"] == "100":
+        elif txn_type == ATTRIB:
             # write DID ATTRIB to ledger
-            did = ledger_response["result"]["txn"]["data"]["dest"]
+            did = txn["data"]["dest"]
             await notify_endorse_did_attrib_event(self._profile, did, meta_data)
 
         else:
-            # TODO unknown ledger transaction type, just ignore for now ...
-            pass
+            self._logger.debug("Unhandled ledger transaction type: %s", txn_type)

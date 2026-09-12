@@ -1,14 +1,18 @@
 """Multikey class."""
 
 import logging
+from typing import Mapping
+
+from aries_askar import Key
+from pydid import VerificationMethod
+
 from ...core.profile import ProfileSession
 from ...resolver.did_resolver import DIDResolver
 from ...utils.multiformats import multibase
-from ...wallet.error import WalletNotFoundError
+from ...wallet.error import WalletError, WalletNotFoundError
 from ..base import BaseWallet
 from ..key_type import BLS12381G2, ED25519, P256, KeyType
 from ..util import b58_to_bytes, bytes_to_b58
-from pydid import VerificationMethod
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,6 +24,12 @@ ALG_MAPPINGS = {
         "prefix_hex": "ed01",
         "prefix_length": 2,
     },
+    "x25519": {
+        "key_type": ED25519,
+        "multikey_prefix": "z6LS",
+        "prefix_hex": "ec01",
+        "prefix_length": 2,
+    },
     "p256": {
         "key_type": P256,
         "multikey_prefix": "zDn",
@@ -28,16 +38,22 @@ ALG_MAPPINGS = {
     },
     "bls12381g2": {
         "key_type": BLS12381G2,
-        "multikey_prefix": "zUC7",
+        "multikey_prefix": ("zUC7", "zUC6"),
         "prefix_hex": "eb01",
         "prefix_length": 2,
     },
 }
 
+# JWK kty/crv pairs supported for Multikey conversion (aligned with JWT algs).
+JWK_TO_ALG = {
+    ("OKP", "Ed25519"): "ed25519",
+    ("OKP", "X25519"): "x25519",
+    ("EC", "P-256"): "p256",
+}
+
 
 def multikey_to_verkey(multikey: str):
     """Transform multikey to verkey."""
-
     alg = key_type_from_multikey(multikey).key_type
     prefix_length = ALG_MAPPINGS[alg]["prefix_length"]
     public_bytes = bytes(bytearray(multibase.decode(multikey))[prefix_length:])
@@ -47,17 +63,50 @@ def multikey_to_verkey(multikey: str):
 
 def verkey_to_multikey(verkey: str, alg: str):
     """Transform verkey to multikey."""
-
     prefix_hex = ALG_MAPPINGS[alg]["prefix_hex"]
     prefixed_key_hex = f"{prefix_hex}{b58_to_bytes(verkey).hex()}"
 
     return multibase.encode(bytes.fromhex(prefixed_key_hex), "base58btc")
 
 
+def jwk_to_multikey(jwk: Mapping) -> str:
+    """Transform a public JWK to multikey.
+
+    Supports OKP/Ed25519, OKP/X25519, and EC/P-256 — the curves used by
+    ACA-Py JWT signing (EdDSA / ES256) and MultikeyManager.
+
+    Private key material (``d``) is ignored so this helper always treats the
+    input as a public key.
+    """
+    if not isinstance(jwk, Mapping):
+        raise MultikeyManagerError("JWK must be a mapping.")
+
+    alg = JWK_TO_ALG.get((jwk.get("kty"), jwk.get("crv")))
+    if not alg:
+        raise MultikeyManagerError(
+            "Unsupported JWK for multikey conversion: "
+            f"kty={jwk.get('kty')}, crv={jwk.get('crv')}."
+        )
+
+    # Only pass public members to Askar.
+    public_jwk = {key: value for key, value in jwk.items() if key != "d"}
+
+    try:
+        public_bytes = Key.from_jwk(public_jwk).get_public_bytes()
+    except Exception as err:
+        raise MultikeyManagerError(f"Unable to parse JWK: {err}") from err
+
+    return verkey_to_multikey(bytes_to_b58(public_bytes), alg=alg)
+
+
 def key_type_from_multikey(multikey: str) -> KeyType:
     """Derive key_type class from multikey prefix."""
     for mapping in ALG_MAPPINGS:
-        if multikey.startswith(ALG_MAPPINGS[mapping]["multikey_prefix"]):
+        prefixes = ALG_MAPPINGS[mapping]["multikey_prefix"]
+        if isinstance(prefixes, (list, tuple)):
+            if any(multikey.startswith(p) for p in prefixes):
+                return ALG_MAPPINGS[mapping]["key_type"]
+        elif multikey.startswith(prefixes):
             return ALG_MAPPINGS[mapping]["key_type"]
 
     raise MultikeyManagerError(f"Unsupported key algorithm for multikey {multikey}.")
@@ -80,7 +129,14 @@ def multikey_from_verification_method(verification_method: VerificationMethod) -
         multikey = verkey_to_multikey(
             verification_method.public_key_base58, alg="bls12381g2"
         )
-    # TODO address JsonWebKey based verification methods
+
+    elif verification_method.type in ("JsonWebKey2020", "JsonWebKey"):
+        jwk = verification_method.public_key_jwk
+        if not jwk:
+            raise MultikeyManagerError(
+                f"{verification_method.type} verification method missing publicKeyJwk."
+            )
+        multikey = jwk_to_multikey(jwk)
 
     else:
         raise MultikeyManagerError("Unknown verification method type.")
@@ -97,7 +153,6 @@ class MultikeyManager:
 
     def __init__(self, session: ProfileSession):
         """Initialize the MultikeyManager."""
-
         self.session: ProfileSession = session
         self.wallet: BaseWallet = session.inject(BaseWallet)
 
@@ -107,11 +162,11 @@ class MultikeyManager:
         This function is idempotent.
         """
         if await self.kid_exists(kid):
-            LOGGER.debug(f"kid {kid} already bound in storage, will not resolve.")
+            LOGGER.info(f"kid {kid} already bound in storage, will not resolve.")
             return await self.from_kid(kid)
         else:
             multikey = await self.resolve_multikey_from_verification_method_id(kid)
-            LOGGER.debug(
+            LOGGER.info(
                 f"kid {kid} binding not found in storage, \
                 binding to resolved multikey {multikey}."
             )
@@ -129,14 +184,17 @@ class MultikeyManager:
     def key_type_from_multikey(self, multikey: str) -> KeyType:
         """Derive key_type class from multikey prefix."""
         for mapping in ALG_MAPPINGS:
-            if multikey.startswith(ALG_MAPPINGS[mapping]["multikey_prefix"]):
+            prefixes = ALG_MAPPINGS[mapping]["multikey_prefix"]
+            if isinstance(prefixes, (list, tuple)):
+                if any(multikey.startswith(p) for p in prefixes):
+                    return ALG_MAPPINGS[mapping]["key_type"]
+            elif multikey.startswith(prefixes):
                 return ALG_MAPPINGS[mapping]["key_type"]
 
         raise MultikeyManagerError(f"Unsupported key algorithm for multikey {multikey}.")
 
     async def kid_exists(self, kid: str):
         """Check if kid exists."""
-
         try:
             key = await self.wallet.get_key_by_kid(kid=kid)
 
@@ -149,7 +207,6 @@ class MultikeyManager:
 
     async def multikey_exists(self, multikey: str):
         """Check if a multikey exists in the wallet."""
-
         try:
             key_info = await self.wallet.get_signing_key(
                 verkey=multikey_to_verkey(multikey)
@@ -164,19 +221,21 @@ class MultikeyManager:
 
     async def from_kid(self, kid: str):
         """Fetch a single key."""
+        try:
+            key_info = await self.wallet.get_key_by_kid(kid=kid)
 
-        key_info = await self.wallet.get_key_by_kid(kid=kid)
-
-        return {
-            "kid": key_info.kid,
-            "multikey": verkey_to_multikey(
-                key_info.verkey, alg=key_info.key_type.key_type
-            ),
-        }
+            return {
+                "kid": key_info.kid,
+                "multikey": verkey_to_multikey(
+                    key_info.verkey, alg=key_info.key_type.key_type
+                ),
+            }
+        except WalletError as err:
+            LOGGER.error(err)
+            return None
 
     async def from_multikey(self, multikey: str):
         """Fetch a single key."""
-
         key_info = await self.wallet.get_signing_key(verkey=multikey_to_verkey(multikey))
 
         return {
@@ -188,7 +247,6 @@ class MultikeyManager:
 
     async def create(self, seed: str = None, kid: str = None, alg: str = DEFAULT_ALG):
         """Create a new key pair."""
-
         if alg not in ALG_MAPPINGS:
             raise MultikeyManagerError(
                 f"Unknown key algorithm, use one of {list(ALG_MAPPINGS.keys())}."
@@ -205,19 +263,30 @@ class MultikeyManager:
             "multikey": verkey_to_multikey(key_info.verkey, alg=alg),
         }
 
-    async def update(self, multikey: str, kid: str):
-        """Assign a new kid to a key pair."""
-
-        if kid and await self.kid_exists(kid=kid):
-            raise MultikeyManagerError(f"kid '{kid}' already exists in wallet.")
-
-        key_info = await self.wallet.assign_kid_to_key(
-            verkey=multikey_to_verkey(multikey), kid=kid
+    async def update(self, multikey: str, kid: str, unbind=False):
+        """Bind or unbind a kid with a key pair."""
+        (
+            await self.unbind_key_id(multikey, kid)
+            if unbind
+            else await self.bind_key_id(multikey, kid)
         )
 
-        return {
-            "kid": key_info.kid,
-            "multikey": verkey_to_multikey(
-                key_info.verkey, alg=key_info.key_type.key_type
-            ),
-        }
+        return {"kid": kid, "multikey": multikey}
+
+    async def bind_key_id(self, multikey: str, kid: str):
+        """Bind a new key id to a key pair."""
+        try:
+            return await self.wallet.assign_kid_to_key(multikey_to_verkey(multikey), kid)
+        except WalletError as err:
+            LOGGER.error(err)
+            raise MultikeyManagerError(err)
+
+    async def unbind_key_id(self, multikey: str, kid: str):
+        """Unbind a key id from a key pair."""
+        try:
+            return await self.wallet.unassign_kid_from_key(
+                multikey_to_verkey(multikey), kid
+            )
+        except WalletError as err:
+            LOGGER.error(err)
+            raise MultikeyManagerError(err)

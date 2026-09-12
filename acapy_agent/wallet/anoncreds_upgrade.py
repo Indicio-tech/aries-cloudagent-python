@@ -15,10 +15,13 @@ from anoncreds import (
 from aries_askar import AskarError
 from indy_credx import LinkSecret
 
-from ..anoncreds.issuer import (
+from ..anoncreds.constants import (
     CATEGORY_CRED_DEF,
     CATEGORY_CRED_DEF_KEY_PROOF,
     CATEGORY_CRED_DEF_PRIVATE,
+    CATEGORY_REV_LIST,
+    CATEGORY_REV_REG_DEF,
+    CATEGORY_REV_REG_DEF_PRIVATE,
     CATEGORY_SCHEMA,
 )
 from ..anoncreds.models.credential_definition import CredDef, CredDefState
@@ -30,13 +33,9 @@ from ..anoncreds.models.revocation import (
     RevRegDefValue,
 )
 from ..anoncreds.models.schema import SchemaState
-from ..anoncreds.revocation import (
-    CATEGORY_REV_LIST,
-    CATEGORY_REV_REG_DEF,
-    CATEGORY_REV_REG_DEF_PRIVATE,
-)
 from ..cache.base import BaseCache
-from ..core.profile import Profile
+from ..core.profile import Profile, ProfileSession
+from ..indy.constants import CATEGORY_REV_REG
 from ..indy.credx.holder import CATEGORY_LINK_SECRET, IndyCredxHolder
 from ..ledger.multiple_ledger.ledger_requests_executor import (
     GET_CRED_DEF,
@@ -48,13 +47,14 @@ from ..messaging.schemas.util import SCHEMA_SENT_RECORD_TYPE
 from ..multitenant.base import BaseMultitenantManager
 from ..revocation.models.issuer_cred_rev_record import IssuerCredRevRecord
 from ..revocation.models.issuer_rev_reg_record import IssuerRevRegRecord
-from ..storage.base import BaseStorage
+from ..storage.base import DEFAULT_PAGE_SIZE, BaseStorage
 from ..storage.error import StorageNotFoundError
 from ..storage.record import StorageRecord
 from ..storage.type import (
     RECORD_TYPE_ACAPY_STORAGE_TYPE,
     RECORD_TYPE_ACAPY_UPGRADING,
     STORAGE_TYPE_VALUE_ANONCREDS,
+    STORAGE_TYPE_VALUE_KANON_ANONCREDS,
 )
 from .singletons import IsAnonCredsSingleton, UpgradeInProgressSingleton
 
@@ -62,6 +62,11 @@ LOGGER = logging.getLogger(__name__)
 
 UPGRADING_RECORD_IN_PROGRESS = "anoncreds_in_progress"
 UPGRADING_RECORD_FINISHED = "anoncreds_finished"
+
+# Number of records fetched per storage page during migration so large record
+# categories (e.g. per-registry credential revocation records) are never loaded
+# into memory all at once.
+UPGRADE_SCAN_BATCH_SIZE = DEFAULT_PAGE_SIZE
 
 # Number of times to retry upgrading records
 max_retries = 5
@@ -98,7 +103,7 @@ class CredDefUpgradeObj:
         cred_def_private: CredentialDefinitionPrivate,
         key_proof: KeyCorrectnessProof,
         revocation: Optional[bool] = None,
-        askar_cred_def: Optional[any] = None,
+        askar_cred_def: Optional[StorageRecord] = None,
         max_cred_num: Optional[int] = None,
     ):
         """Initialize cred def upgrade object."""
@@ -120,12 +125,14 @@ class RevRegDefUpgradeObj:
         rev_reg_def: RevRegDef,
         rev_reg_def_private: RevocationRegistryDefinitionPrivate,
         active: bool = False,
+        accum: Optional[str] = None,
     ):
         """Initialize rev reg def upgrade object."""
         self.rev_reg_def_id = rev_reg_def_id
         self.rev_reg_def = rev_reg_def
         self.rev_reg_def_private = rev_reg_def_private
         self.active = active
+        self.accum = accum
 
 
 class RevListUpgradeObj:
@@ -136,20 +143,19 @@ class RevListUpgradeObj:
         rev_list: RevList,
         pending: list,
         rev_reg_def_id: str,
-        cred_rev_records: list,
+        max_cred_rev_id: int,
     ):
         """Initialize rev entry upgrade object."""
         self.rev_list = rev_list
         self.pending = pending
         self.rev_reg_def_id = rev_reg_def_id
-        self.cred_rev_records = cred_rev_records
+        self.max_cred_rev_id = max_cred_rev_id
 
 
 async def get_schema_upgrade_object(
-    profile: Profile, schema_id: str, askar_schema
+    profile: Profile, schema_id: str, askar_schema: StorageRecord
 ) -> SchemaUpgradeObj:
     """Get schema upgrade object."""
-
     async with profile.session() as session:
         schema_id = askar_schema.tags.get("schema_id")
         issuer_did = askar_schema.tags.get("schema_issuer_did")
@@ -184,7 +190,7 @@ async def get_schema_upgrade_object(
 
 
 async def get_cred_def_upgrade_object(
-    profile: Profile, askar_cred_def
+    profile: Profile, askar_cred_def: StorageRecord
 ) -> CredDefUpgradeObj:
     """Get cred def upgrade object."""
     cred_def_id = askar_cred_def.tags.get("cred_def_id")
@@ -233,7 +239,7 @@ async def get_cred_def_upgrade_object(
 async def get_rev_reg_def_upgrade_object(
     profile: Profile,
     cred_def_upgrade_obj: CredDefUpgradeObj,
-    askar_issuer_rev_reg_def,
+    askar_issuer_rev_reg_def: StorageRecord,
     is_active: bool,
 ) -> RevRegDefUpgradeObj:
     """Get rev reg def upgrade object."""
@@ -244,6 +250,8 @@ async def get_rev_reg_def_upgrade_object(
         askar_reg_rev_def_private = await storage.get_record(
             CATEGORY_REV_REG_DEF_PRIVATE, rev_reg_def_id
         )
+        accum_record = await storage.get_record(CATEGORY_REV_REG, rev_reg_def_id)
+        accum_value = json.loads(accum_record.value)["value"]["accum"]
 
     revoc_reg_def_values = json.loads(askar_issuer_rev_reg_def.value)
 
@@ -255,7 +263,7 @@ async def get_rev_reg_def_upgrade_object(
     )
 
     rev_reg_def = RevRegDef(
-        issuer_id=askar_issuer_rev_reg_def.tags.get("issuer_did"),
+        issuer_id=cred_def_upgrade_obj.cred_def.issuer_id,
         cred_def_id=cred_def_upgrade_obj.cred_def_id,
         tag=revoc_reg_def_values["tag"],
         type=revoc_reg_def_values["revoc_def_type"],
@@ -263,7 +271,11 @@ async def get_rev_reg_def_upgrade_object(
     )
 
     return RevRegDefUpgradeObj(
-        rev_reg_def_id, rev_reg_def, askar_reg_rev_def_private.value, is_active
+        rev_reg_def_id,
+        rev_reg_def,
+        askar_reg_rev_def_private.value,
+        is_active,
+        accum_value,
     )
 
 
@@ -272,37 +284,54 @@ async def get_rev_list_upgrade_object(
 ) -> RevListUpgradeObj:
     """Get revocation entry upgrade object."""
     rev_reg = rev_reg_def_upgrade_obj.rev_reg_def
+
+    # We need to increase the list by 1 here because the first index
+    # is reserved by the cryptographic algorithm and the previous record
+    # goes up to max_cred_num as numbers and not a list of truthy values
+    revocation_list = [0] * (rev_reg.value.max_cred_num + 1)
+
+    # A single registry can hold tens of thousands of credential revocation
+    # records; page through them so they are not all held in memory at once.
+    # 0 index is reserved by the crypto algorithm.
+    max_cred_rev_id = 1
     async with profile.session() as session:
         storage = session.inject(BaseStorage)
-        askar_cred_rev_records = await storage.find_all_records(
-            IssuerCredRevRecord.RECORD_TYPE,
-            {"rev_reg_id": rev_reg_def_upgrade_obj.rev_reg_def_id},
-        )
-
-    revocation_list = [0] * rev_reg.value.max_cred_num
-    for askar_cred_rev_record in askar_cred_rev_records:
-        if askar_cred_rev_record.tags.get("state") == "revoked":
-            revocation_list[int(askar_cred_rev_record.tags.get("cred_rev_id")) - 1] = 1
+        offset = 0
+        while True:
+            page = await storage.find_paginated_records(
+                type_filter=IssuerCredRevRecord.RECORD_TYPE,
+                tag_query={"rev_reg_id": rev_reg_def_upgrade_obj.rev_reg_def_id},
+                limit=UPGRADE_SCAN_BATCH_SIZE,
+                offset=offset,
+            )
+            if not page:
+                break
+            for record in page:
+                cred_rev_id = int(record.tags.get("cred_rev_id"))
+                max_cred_rev_id = max(max_cred_rev_id, cred_rev_id)
+                if record.tags.get("state") == "revoked":
+                    revocation_list[cred_rev_id] = 1
+            if len(page) < UPGRADE_SCAN_BATCH_SIZE:
+                break
+            offset += UPGRADE_SCAN_BATCH_SIZE
 
     rev_list = RevList(
         issuer_id=rev_reg.issuer_id,
         rev_reg_def_id=rev_reg_def_upgrade_obj.rev_reg_def_id,
         revocation_list=revocation_list,
-        current_accumulator=json.loads(
-            rev_reg_def_upgrade_obj.askar_issuer_rev_reg_def.value
-        )["revoc_reg_entry"]["value"]["accum"],
+        current_accumulator=rev_reg_def_upgrade_obj.accum,
     )
 
     return RevListUpgradeObj(
         rev_list,
         json.loads(rev_reg_def_upgrade_obj.askar_issuer_rev_reg_def.value)["pending_pub"],
         rev_reg_def_upgrade_obj.rev_reg_def_id,
-        askar_cred_rev_records,
+        max_cred_rev_id,
     )
 
 
 async def upgrade_and_delete_schema_records(
-    txn, schema_upgrade_obj: SchemaUpgradeObj
+    txn: ProfileSession, schema_upgrade_obj: SchemaUpgradeObj
 ) -> None:
     """Upgrade and delete schema records."""
     schema_anoncreds = schema_upgrade_obj.schema
@@ -321,7 +350,7 @@ async def upgrade_and_delete_schema_records(
 
 
 async def upgrade_and_delete_cred_def_records(
-    txn, anoncreds_schema, cred_def_upgrade_obj: CredDefUpgradeObj
+    txn: ProfileSession, anoncreds_schema: Schema, cred_def_upgrade_obj: CredDefUpgradeObj
 ) -> None:
     """Upgrade and delete cred def records."""
     cred_def_id = cred_def_upgrade_obj.cred_def_id
@@ -372,7 +401,7 @@ rev_reg_states_mapping = {
 
 
 async def upgrade_and_delete_rev_reg_def_records(
-    txn, rev_reg_def_upgrade_obj: RevRegDefUpgradeObj
+    txn: ProfileSession, rev_reg_def_upgrade_obj: RevRegDefUpgradeObj
 ) -> None:
     """Upgrade and delete rev reg def records."""
     rev_reg_def_id = rev_reg_def_upgrade_obj.rev_reg_def_id
@@ -399,14 +428,11 @@ async def upgrade_and_delete_rev_reg_def_records(
 
 
 async def upgrade_and_delete_rev_entry_records(
-    txn, rev_list_upgrade_obj: RevListUpgradeObj
+    txn: ProfileSession, rev_list_upgrade_obj: RevListUpgradeObj
 ) -> None:
     """Upgrade and delete revocation entry records."""
-    next_index = 0
-    for cred_rev_record in rev_list_upgrade_obj.cred_rev_records:
-        if int(cred_rev_record.tags.get("cred_rev_id")) > next_index:
-            next_index = int(cred_rev_record.tags.get("cred_rev_id"))
-        await txn.handle.remove(IssuerCredRevRecord.RECORD_TYPE, cred_rev_record.id)
+    # 0 index is reserved by the crypto algorithm
+    next_index = max(1, rev_list_upgrade_obj.max_cred_rev_id)
 
     await txn.handle.insert(
         CATEGORY_REV_LIST,
@@ -424,7 +450,7 @@ async def upgrade_and_delete_rev_entry_records(
 
 
 async def upgrade_all_records_with_transaction(
-    txn: any,
+    txn: ProfileSession,
     schema_upgrade_objs: list[SchemaUpgradeObj],
     cred_def_upgrade_objs: list[CredDefUpgradeObj],
     rev_reg_def_upgrade_objs: list[RevRegDefUpgradeObj],
@@ -459,7 +485,6 @@ async def get_rev_reg_def_upgrade_objs(
     rev_list_upgrade_objs: list[RevListUpgradeObj],
 ) -> list[RevRegDefUpgradeObj]:
     """Get rev reg def upgrade objects."""
-
     rev_reg_def_upgrade_objs = []
     async with profile.session() as session:
         storage = session.inject(BaseStorage)
@@ -471,6 +496,7 @@ async def get_rev_reg_def_upgrade_objs(
             ),
             key=lambda x: json.loads(x.value)["created_at"],
         )
+
     found_active = False
     is_active = False
     for askar_issuer_rev_reg_def in askar_issuer_rev_reg_def_records:
@@ -501,7 +527,7 @@ async def get_rev_reg_def_upgrade_objs(
     return rev_reg_def_upgrade_objs
 
 
-async def convert_records_to_anoncreds(profile) -> None:
+async def convert_records_to_anoncreds(profile: Profile) -> None:
     """Convert and delete old askar records."""
     async with profile.session() as session:
         storage = session.inject(BaseStorage)
@@ -572,6 +598,7 @@ async def retry_converting_records(
     async def fail_upgrade():
         async with profile.session() as session:
             storage = session.inject(BaseStorage)
+            UpgradeInProgressSingleton().remove_wallet(profile.name)
             await storage.delete_record(upgrading_record)
 
     try:
@@ -588,8 +615,9 @@ async def retry_converting_records(
             )
         else:
             LOGGER.error(
-                f"""Failed to upgrade wallet: {profile.name} after 5 retries. 
-                Try fixing any connection issues and re-running the update"""
+                f"Failed to upgrade wallet: {profile.name} after 5 retries. "
+                "Try fixing any connection issues or repairing the wallet and re-running "
+                "the update"
             )
             await fail_upgrade()
 
@@ -627,17 +655,34 @@ async def finish_upgrade(profile: Profile):
             storage_type_record = await storage.find_record(
                 type_filter=RECORD_TYPE_ACAPY_STORAGE_TYPE, tag_query={}
             )
-            await storage.update_record(
-                storage_type_record, STORAGE_TYPE_VALUE_ANONCREDS, {}
-            )
+
+            if storage_type_record.value == STORAGE_TYPE_VALUE_KANON_ANONCREDS:
+                await storage.update_record(
+                    storage_type_record, STORAGE_TYPE_VALUE_KANON_ANONCREDS, {}
+                )
+            else:
+                await storage.update_record(
+                    storage_type_record, STORAGE_TYPE_VALUE_ANONCREDS, {}
+                )
+
         # This should only happen for subwallets
         except StorageNotFoundError:
-            await storage.add_record(
-                StorageRecord(
-                    RECORD_TYPE_ACAPY_STORAGE_TYPE,
-                    STORAGE_TYPE_VALUE_ANONCREDS,
+            # Check if this is a Kanon-based profile to determine storage type
+            if hasattr(profile, "backend") and "kanon" in profile.backend.lower():
+                await storage.add_record(
+                    StorageRecord(
+                        RECORD_TYPE_ACAPY_STORAGE_TYPE,
+                        STORAGE_TYPE_VALUE_KANON_ANONCREDS,
+                    )
                 )
-            )
+            else:
+                await storage.add_record(
+                    StorageRecord(
+                        RECORD_TYPE_ACAPY_STORAGE_TYPE,
+                        STORAGE_TYPE_VALUE_ANONCREDS,
+                    )
+                )
+
     await finish_upgrading_record(profile)
     IsAnonCredsSingleton().set_wallet(profile.name)
     UpgradeInProgressSingleton().remove_wallet(profile.name)
@@ -675,12 +720,14 @@ async def finish_upgrade_by_updating_profile_or_shutting_down(
         await upgrade_subwallet(profile)
         await finish_upgrade(profile)
         LOGGER.info(
-            f"""Upgrade of subwallet {profile.settings.get("wallet.name")} has completed. Profile is now askar-anoncreds"""  # noqa: E501
+            "Upgrade of subwallet %s has completed. Profile is now askar-anoncreds",
+            profile.settings.get("wallet.name"),
         )
     else:
         await finish_upgrade(profile)
         LOGGER.info(
-            f"Upgrade of base wallet {profile.settings.get('wallet.name')} to anoncreds has completed. Shutting down agent."  # noqa: E501
+            "Upgrade of base wallet %s to anoncreds has completed. Shutting down agent.",
+            profile.settings.get("wallet.name"),
         )
         asyncio.get_event_loop().stop()
 
@@ -690,7 +737,7 @@ async def check_upgrade_completion_loop(profile: Profile, is_subwallet=False):
     async with profile.session() as session:
         while True:
             storage = session.inject(BaseStorage)
-            LOGGER.debug(f"Checking upgrade completion for wallet: {profile.name}")
+            LOGGER.debug("Checking upgrade completion for wallet: %s", profile.name)
             try:
                 upgrading_record = await storage.find_record(
                     RECORD_TYPE_ACAPY_UPGRADING, tag_query={}
@@ -702,11 +749,14 @@ async def check_upgrade_completion_loop(profile: Profile, is_subwallet=False):
                         await upgrade_subwallet(profile)
                         await finish_upgrade(profile)
                         LOGGER.info(
-                            f"""Upgrade of subwallet {profile.settings.get("wallet.name")} has completed. Profile is now askar-anoncreds"""  # noqa: E501
+                            "Upgrade of subwallet %s has completed. "
+                            "Profile is now askar-anoncreds",
+                            profile.settings.get("wallet.name"),
                         )
                         return
                     LOGGER.info(
-                        f"Upgrade complete for wallet: {profile.name}, shutting down agent."  # noqa: E501
+                        "Upgrade complete for wallet: %s, shutting down agent.",
+                        profile.name,
                     )
                     # Shut down agent if base wallet
                     asyncio.get_event_loop().stop()

@@ -109,12 +109,10 @@ class DefaultContextBuilder(ContextBuilder):
 
     async def load_plugins(self, context: InjectionContext):
         """Set up plugin registry and load plugins."""
-
         LOGGER.debug("Initializing plugin registry")
         plugin_registry = PluginRegistry(
             blocklist=self.settings.get("blocked_plugins", [])
         )
-        wallet_type = self.settings.get("wallet.type")
         context.injector.bind_instance(PluginRegistry, plugin_registry)
 
         # Register standard protocol plugins
@@ -147,10 +145,9 @@ class DefaultContextBuilder(ContextBuilder):
 
         anoncreds_plugins = [
             "acapy_agent.anoncreds",
-            "acapy_agent.anoncreds.default.did_indy",
             "acapy_agent.anoncreds.default.did_web",
             "acapy_agent.anoncreds.default.legacy_indy",
-            "acapy_agent.revocation_anoncreds",
+            "acapy_agent.anoncreds.revocation",
         ]
 
         askar_plugins = [
@@ -173,7 +170,7 @@ class DefaultContextBuilder(ContextBuilder):
             # Register both askar and anoncreds plugins for multitenancy
             register_askar_plugins()
             register_anoncreds_plugins()
-        elif wallet_type == "askar-anoncreds":
+        elif self.settings.get("wallet.type") in ("askar-anoncreds", "kanon-anoncreds"):
             register_anoncreds_plugins()
         else:
             register_askar_plugins()

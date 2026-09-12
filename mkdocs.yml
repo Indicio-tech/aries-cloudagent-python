@@ -79,15 +79,17 @@ extra:
     provider: mike
 nav:
 - Welcome!:
-    - Welcome: aca-py.org.md
     - ACA-Py README: README.md
     - Release Notes: CHANGELOG.md
     - ACA-Py Long Term Support (LTS) Policy: LTS-Strategy.md
+    - ACA-Py OpenWallet Foundation Project Mapping: ACA-Py-OWF-Project-Mapping.md
 - Features:
     - Developer Introduction: features/DevReadMe.md
     - DevContainer Support: features/devcontainer.md
     - Supported Aries Interop Profiles and RFCs: features/SupportedRFCs.md
     - The Admin API: features/AdminAPI.md
+    - OAuth 2.0 Resource Server: features/OAuthResourceServer.md
+    - Kanon Storage: features/KanonStorage.md
     - ACA-Py Plugins: features/PlugIns.md
     - Multitenant ACA-Py: features/Multitenancy.md
     - Qualified DIDs: features/QualifiedDIDs.md
@@ -96,16 +98,18 @@ nav:
     - Reusing DIDComm Connections Between Agents: features/ReuseConnection.md
     - Publishing AnonCreds Objects To Other Ledgers/Verifiable Data Registries: features/AnonCredsMethods.md
     - Configuring Multiple Indy Ledgers: features/Multiledger.md
-    - Automatically Endorsing Indy Transations: features/Endorser.md
+    - Automatically Endorsing Indy Transactions: features/Endorser.md
     - Using W3C JSON-LD Signed Credentials: features/JsonLdCredentials.md
     - Issuing and Presenting W3C Data Integrity VCs: features/W3cCredentials.md
     - Using SD-JWTs: features/SelectiveDisclosureJWTs.md
     - AnonCreds Presentation Validation: features/AnonCredsProofValidation.md
+    - AnonCreds Revocation Auto Recovery: features/AnonCredsRevocationAutoRecovery.md
     - Multiple Credential Types: features/Multicredentials.md
     - Code Generation with the Open API: features/UsingOpenAPI.md
     - ACA-Py as a DIDComm Mediator: features/Mediation.md
 - Demos:
     - ACA-Py / AnonCreds Workshop: demo/ACA-Py-Workshop.md
+    - ACA-Py / AnonCreds / did:webvh Workshop: demo/WebVH-Workshop.md
     - The Alice-Faber Demo: demo/README.md
     - Open API Tutorial: demo/OpenAPIDemo.md
     - Alice Gets a Phone: demo/AliceGetsAPhone.md
@@ -136,6 +140,7 @@ nav:
 - Deploying:
     - Deployment Model: deploying/deploymentModel.md
     - Upgrading ACA-Py: deploying/UpgradingACA-Py.md
+    - Upgrading ACA-Py from AIPv1 to AIPv2: deploying/upgradingToAipv2.md
     - Enabling BBS Signatures support: deploying/BBSSignatures.md
     - Indy SDK to Askar Migration: deploying/IndySDKtoAskarMigration.md
     - Controller Migration to use the askar-anoncreds Wallet Type: deploying/AnonCredsControllerMigration.md
@@ -144,6 +149,7 @@ nav:
     - Databases: deploying/Databases.md
     - Persistent Queues and Caching: deploying/RedisPlugins.md
     - The askar-anoncreds Wallet Type: deploying/AnonCredsWalletType.md
+    - Migrating AnonCreds Issuance from Indy to did:webvh: deploying/IndyToWebVHMigration.md
 - Testing/Troubleshooting:
     - Running and Creating Unit Tests: testing/UnitTests.md
     - Integration Tests: testing/IntegrationTests.md
@@ -154,6 +160,7 @@ nav:
 - Contributing:
     - How to Contribute: CONTRIBUTING.md
     - Maintainers: MAINTAINERS.md
+    - Governance: GOVERNANCE.md
     - Code of Conduct: CODE_OF_CONDUCT.md
     - Security Vulnerability Reporting: SECURITY.md
     - Publishing an ACA-Py Release: PUBLISHING.md

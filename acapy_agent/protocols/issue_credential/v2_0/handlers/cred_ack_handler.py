@@ -18,12 +18,13 @@ class V20CredAckHandler(BaseHandler):
         Args:
             context: request context
             responder: responder callback
+
         """
         r_time = get_timer()
 
         self._logger.debug("V20CredAckHandler called with context %s", context)
         assert isinstance(context.message, V20CredAck)
-        self._logger.info(
+        self._logger.debug(
             "Received v2.0 credential ack message: %s",
             context.message.serialize(as_string=True),
         )

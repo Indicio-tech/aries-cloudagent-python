@@ -29,9 +29,7 @@ from ...coordinate_mediation.v1_0.models.mediation_record import MediationRecord
 from ...coordinate_mediation.v1_0.route_manager import RouteManager
 from ...didcomm_prefix import DIDCommPrefix
 from ...didexchange.v1_0.manager import DIDXManager
-from ...issue_credential.v1_0.models.credential_exchange import V10CredentialExchange
 from ...issue_credential.v2_0.models.cred_ex_record import V20CredExRecord
-from ...present_proof.v1_0.models.presentation_exchange import V10PresentationExchange
 from ...present_proof.v2_0.models.pres_exchange import V20PresExRecord
 from .message_types import DEFAULT_VERSION
 from .messages.invitation import HSProto, InvitationMessage
@@ -187,58 +185,43 @@ class InvitationCreator:
         self.mediation_id = mediation_id
         self.metadata = metadata
 
-    async def create_attachment(self, attachment: Mapping, pthid: str) -> AttachDecorator:
-        """Create attachment for OOB invitation."""
+    # to use a single session for all attachments, reducing session overhead
+    async def create_attachment(
+        self, attachment: Mapping, pthid: str, session
+    ) -> AttachDecorator:
+        """Create an attachment decorator from attachment mapping."""
         a_type = attachment.get("type")
         a_id = attachment.get("id")
-
         if not a_type or not a_id:
             raise OutOfBandManagerError("Attachment must include type and id")
-
-        async with self.profile.session() as session:
-            if a_type == "credential-offer":
-                try:
-                    cred_ex_rec = await V10CredentialExchange.retrieve_by_id(
-                        session,
-                        a_id,
-                    )
-                    message = cred_ex_rec.credential_offer_dict
-
-                except StorageNotFoundError:
-                    cred_ex_rec = await V20CredExRecord.retrieve_by_id(
-                        session,
-                        a_id,
-                    )
-                    message = cred_ex_rec.cred_offer
-            elif a_type == "present-proof":
-                try:
-                    pres_ex_rec = await V10PresentationExchange.retrieve_by_id(
-                        session,
-                        a_id,
-                    )
-                    message = pres_ex_rec.presentation_request_dict
-                except StorageNotFoundError:
-                    pres_ex_rec = await V20PresExRecord.retrieve_by_id(
-                        session,
-                        a_id,
-                    )
-                    message = pres_ex_rec.pres_request
-            else:
-                raise OutOfBandManagerError(f"Unknown attachment type: {a_type}")
-
+        if a_type == "credential-offer":
+            cred_ex_rec = await V20CredExRecord.retrieve_by_id(
+                session,
+                a_id,
+            )
+            message = cred_ex_rec.cred_offer
+        elif a_type == "present-proof":
+            pres_ex_rec = await V20PresExRecord.retrieve_by_id(session, a_id)
+            message = pres_ex_rec.pres_request
+        else:
+            raise OutOfBandManagerError(f"Unknown attachment type: {a_type}")
         message.assign_thread_id(pthid=pthid)
         return InvitationMessage.wrap_message(message.serialize())
 
+    # to use a single session for all attachments, reducing session overhead
     async def create_attachments(
-        self,
-        invitation_msg_id: str,
-        attachments: Optional[Sequence[Mapping]] = None,
+        self, invitation_msg_id: str, attachments: Optional[Sequence[Mapping]] = None
     ) -> List[AttachDecorator]:
-        """Create attachments for OOB invitation."""
-        return [
-            await self.create_attachment(attachment, invitation_msg_id)
-            for attachment in attachments or []
-        ]
+        """Create attachment decorators for an OOB invitation."""
+        results = []
+        if attachments:
+            async with self.profile.session() as session:
+                for attachment in attachments:
+                    result = await self.create_attachment(
+                        attachment, invitation_msg_id, session
+                    )
+                    results.append(result)
+        return results
 
     async def create(self) -> InvitationRecord:
         """Create the invitation, returning the result as an InvitationRecord."""
@@ -311,16 +294,19 @@ class InvitationCreator:
             connection_protocol=connection_protocol,
         )
 
+        LOGGER.debug("Creating connection record for invitation %s", self.msg_id)
         async with self.profile.transaction() as session:
             await conn_rec.save(session, reason="Created new invitation")
             await conn_rec.attach_invitation(session, msg)
 
             if self.metadata:
+                LOGGER.debug("Setting metadata for connection %s", conn_rec.connection_id)
                 for key, value in self.metadata.items():
                     await conn_rec.metadata_set(session, key, value)
 
             await session.commit()
 
+        LOGGER.debug("Routing invitation %s", conn_rec.connection_id)
         await self.route_manager.route_invitation(
             self.profile, conn_rec, mediation_record
         )
@@ -344,6 +330,7 @@ class InvitationCreator:
         mediation_record: Optional[MediationRecord],
     ) -> CreateResult:
         """Handle use_did invitation creation."""
+        LOGGER.debug("Handling invitation using DID %s", did_info.did)
         invi_msg = InvitationMessage(
             _id=self.msg_id,
             label=self.my_label,
@@ -360,12 +347,17 @@ class InvitationCreator:
         invi_url = invi_msg.to_url(endpoint)
 
         if self.handshake_protocols:
+            LOGGER.debug(
+                "Handshake protocols given: %s. Creating connection",
+                self.handshake_protocols,
+            )
             conn_rec = await self.handle_handshake_protos(
                 did_info.verkey, invi_msg, mediation_record
             )
             our_service = None
         else:
             conn_rec = None
+            LOGGER.debug("No handshake protocols. Routing verkey %s", did_info.verkey)
             await self.route_manager.route_verkey(
                 self.profile, did_info.verkey, mediation_record
             )
@@ -402,6 +394,7 @@ class InvitationCreator:
                 "Cannot create public invitation with no public DID"
             )
 
+        LOGGER.debug("Public DID found: %s", public_did.did)
         if bool(IndyDID.PATTERN.match(public_did.did)):
             public_did = DIDInfo(
                 did=f"did:sov:{public_did.did}",
@@ -479,6 +472,7 @@ class InvitationCreator:
         mediation_record: Optional[MediationRecord],
     ) -> CreateResult:
         """Create an invitation using legacy bare public key and inline service."""
+        LOGGER.debug("Handling legacy invitation")
         async with self.profile.session() as session:
             wallet = session.inject(BaseWallet)
             connection_key = await wallet.create_signing_key(ED25519)
@@ -522,11 +516,15 @@ class InvitationCreator:
         )
 
         if self.handshake_protocols:
+            LOGGER.debug("Handshake protocols given: %s", self.handshake_protocols)
             conn_rec = await self.handle_handshake_protos(
                 connection_key.verkey, invi_msg, mediation_record
             )
             our_service = None
         else:
+            LOGGER.debug(
+                "No handshake protocols. Routing verkey %s", connection_key.verkey
+            )
             await self.route_manager.route_verkey(
                 self.profile, connection_key.verkey, mediation_record
             )
@@ -554,6 +552,7 @@ class OutOfBandManager(BaseConnectionManager):
 
         Args:
             profile: The profile for this out of band manager
+
         """
         self._profile = profile
         super().__init__(self._profile)
@@ -673,6 +672,7 @@ class OutOfBandManager(BaseConnectionManager):
         """
         if mediation_id:
             try:
+                LOGGER.debug("Getting mediation record for %s", mediation_id)
                 await self._route_manager.mediation_record_if_id(
                     self.profile, mediation_id
                 )
@@ -715,8 +715,8 @@ class OutOfBandManager(BaseConnectionManager):
                 search_public_did = public_did
 
             LOGGER.debug(
-                "Trying to find existing connection for oob invitation with "
-                f"did {search_public_did}"
+                "Trying to find existing connection for oob invitation with did %s",
+                search_public_did,
             )
 
             async with self._profile.session() as session:
@@ -739,7 +739,7 @@ class OutOfBandManager(BaseConnectionManager):
             )
 
             LOGGER.warning(
-                f"Connection reuse request finished with state {oob_record.state}"
+                "Connection reuse request finished with state %s", oob_record.state
             )
 
             if oob_record.state == OobRecord.STATE_ACCEPTED:
@@ -760,7 +760,7 @@ class OutOfBandManager(BaseConnectionManager):
                 service_accept=service_accept,
             )
             LOGGER.debug(
-                f"Performed handshake with connection {oob_record.connection_id}"
+                "Performed handshake with connection %s", oob_record.connection_id
             )
             # re-fetch connection record
             async with self.profile.session() as session:
@@ -784,8 +784,9 @@ class OutOfBandManager(BaseConnectionManager):
         # Handle any attachments
         if invitation.requests_attach:
             LOGGER.debug(
-                f"Process attached messages for oob exchange {oob_record.oob_id} "
-                f"(connection_id {oob_record.connection_id})"
+                "Process attached messages for oob exchange %s (connection_id %s)",
+                oob_record.oob_id,
+                oob_record.connection_id,
             )
 
             # FIXME: this should ideally be handled using an event handler. Once the
@@ -926,7 +927,7 @@ class OutOfBandManager(BaseConnectionManager):
                     ]:
                         return oob_record
 
-                LOGGER.debug(f"Wait for oob {oob_id} to receive reuse accepted message")
+                LOGGER.debug("Wait for oob %s to receive reuse accepted message", oob_id)
                 event = await await_event
                 LOGGER.debug("Received reuse response message")
                 return OobRecord.deserialize(event.payload)
@@ -950,7 +951,7 @@ class OutOfBandManager(BaseConnectionManager):
             "^acapy::record::connections::(active|completed|response)$"
         )
 
-        LOGGER.debug(f"Wait for connection {connection_id} to become active")
+        LOGGER.debug("Wait for connection %s to become active", connection_id)
 
         async def _wait_for_state() -> ConnRecord:
             event = self.profile.inject(EventBus)
@@ -967,7 +968,7 @@ class OutOfBandManager(BaseConnectionManager):
                     if conn_record.is_ready:
                         return conn_record
 
-                LOGGER.debug(f"Wait for connection {connection_id} to become active")
+                LOGGER.debug("Wait for connection %s to become active", connection_id)
                 # Wait for connection record to be in state
                 event = await await_event
                 return ConnRecord.deserialize(event.payload)
@@ -979,7 +980,7 @@ class OutOfBandManager(BaseConnectionManager):
             )
 
         except asyncio.TimeoutError:
-            LOGGER.warning(f"Connection for connection_id {connection_id} not ready")
+            LOGGER.warning("Connection for connection_id %s not ready", connection_id)
             return None
 
     async def _handle_handshake_reuse(
@@ -993,8 +994,10 @@ class OutOfBandManager(BaseConnectionManager):
         # Wait for the reuse accepted message
         oob_record = await self._wait_for_reuse_response(oob_record.oob_id)
         LOGGER.debug(
-            f"Oob reuse for oob id {oob_record.oob_id} with connection "
-            f"{oob_record.connection_id} finished with state {oob_record.state}"
+            "Oob reuse for oob id %s with connection %s finished with state %s",
+            oob_record.oob_id,
+            oob_record.connection_id,
+            oob_record.state,
         )
 
         if oob_record.state != OobRecord.STATE_ACCEPTED:
@@ -1042,18 +1045,20 @@ class OutOfBandManager(BaseConnectionManager):
         # Get the single service item
         service = invitation.services[0]
         public_did = None
-        if isinstance(service, str):
-            # If it's in the did format, we need to convert to a full service block
-            # An existing connection can only be reused based on a public DID
-            # in an out-of-band message (RFC 0434).
-            # OR did:peer:2 or did:peer:4.
 
-            if service.startswith("did:peer"):
-                public_did = service
-                if public_did.startswith("did:peer:4"):
-                    public_did = self.long_did_peer_to_short(public_did)
-            else:
+        if isinstance(service, str):
+            # Acceptable service formats: public DID for reuse in out-of-band messages
+            # (RFC 0434), such as did:sov, did:peer:2, did:peer:4, etc.
+
+            # did:peer:4 we need to convert the long form to the short form
+            if service.startswith("did:peer:4"):
+                public_did = self.long_did_peer_to_short(service)
+            # did:sov we need to strip the did:sov: prefix
+            elif service.startswith("did:sov"):
                 public_did = service.split(":")[-1]
+            # Leave did:peer:2, did:web, or any other DID format as is
+            else:
+                public_did = service
 
             # TODO: resolve_invitation should resolve key_info objects
             # or something else that includes the key type. We now assume
@@ -1079,9 +1084,9 @@ class OutOfBandManager(BaseConnectionManager):
             )
 
         if public_did:
-            LOGGER.debug(f"Creating connection with public did {public_did}")
+            LOGGER.debug("Creating connection with public did %s", public_did)
         else:
-            LOGGER.debug(f"Creating connection with service {service}")
+            LOGGER.debug("Creating connection with service %s", service)
 
         conn_record = None
         for protocol in supported_handshake_protocols:

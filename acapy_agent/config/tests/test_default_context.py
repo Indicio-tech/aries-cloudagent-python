@@ -50,10 +50,8 @@ class TestDefaultContext(IsolatedAsyncioTestCase):
         # Check that anoncreds plugins are registered
         for plugin in [
             "acapy_agent.anoncreds",
-            "acapy_agent.anoncreds.default.did_indy",
             "acapy_agent.anoncreds.default.did_web",
             "acapy_agent.anoncreds.default.legacy_indy",
-            "acapy_agent.revocation_anoncreds",
         ]:
             assert plugin in plugin_registry.plugin_names
 
@@ -70,10 +68,8 @@ class TestDefaultContext(IsolatedAsyncioTestCase):
         # Check that anoncreds and askar plugins are registered
         for plugin in [
             "acapy_agent.anoncreds",
-            "acapy_agent.anoncreds.default.did_indy",
             "acapy_agent.anoncreds.default.did_web",
             "acapy_agent.anoncreds.default.legacy_indy",
-            "acapy_agent.revocation_anoncreds",
             "acapy_agent.messaging.credential_definitions",
             "acapy_agent.messaging.schemas",
             "acapy_agent.revocation",
@@ -102,9 +98,7 @@ class TestDefaultContext(IsolatedAsyncioTestCase):
         # Ensure anoncreds plugins are not registered
         for plugin in [
             "acapy_agent.anoncreds",
-            "acapy_agent.anoncreds.default.did_indy",
             "acapy_agent.anoncreds.default.did_web",
             "acapy_agent.anoncreds.default.legacy_indy",
-            "acapy_agent.revocation_anoncreds",
         ]:
             assert plugin not in plugin_registry.plugin_names

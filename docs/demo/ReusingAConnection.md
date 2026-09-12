@@ -25,17 +25,17 @@ Example invitation:
         "https://didcomm.org/didexchange/1.0"
     ],
     "services": [
-        "did:sov:4JiUsoK85pVkkB1bAPzFaP"
+        "did:peer:2.4JiUsoK85pVkkB1bAPzFaP4JiUsoK85pVkkB1bAPzFaP"
     ]
 }
 ```
 
-[RFC 0434 Out of Band]: https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband
-[RFC 0023 DID Exchange]: https://github.com/hyperledger/aries-rfcs/tree/main/features/0023-did-exchange
-[RFC 0160 Connection Protocol]: https://github.com/hyperledger/aries-rfcs/tree/main/features/0160-connection-protocol
-[RFC 0434 Out of Band invitation]: https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband#invitation-httpsdidcommorgout-of-bandverinvitation
-[RFC 0023 DID Exchange request]: https://github.com/hyperledger/aries-rfcs/tree/main/features/0023-did-exchange#1-exchange-request
-[RFC 0434 Out of Band reuse]: https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband#reuse-messages
+[RFC 0434 Out of Band]: https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0434-outofband
+[RFC 0023 DID Exchange]: https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0023-did-exchange
+[RFC 0160 Connection Protocol]: https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0160-connection-protocol
+[RFC 0434 Out of Band invitation]: https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0434-outofband#invitation-httpsdidcommorgout-of-bandverinvitation
+[RFC 0023 DID Exchange request]: https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0023-did-exchange#1-exchange-request
+[RFC 0434 Out of Band reuse]: https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0434-outofband#reuse-messages
 
 Here's the flow that demonstrates where reuse helps. For simplicity, we'll use the terms "Issuer"
 and "Wallet" in this example, but it applies to any connection between any two
@@ -65,8 +65,8 @@ agents (the inviter and the invitee) that establish connections with one another
 The [RFC 0434 Out of Band] protocol requirement enables `reuse` message by the
 invitee (the Wallet in the flow above) is that the `service` in the invitation
 **MUST** be a resolvable DID that is the same in all of the invitations. In the
-example invitation above, the DID is a `did:sov` DID that is resolvable on a public
-Hyperledger Indy network. The DID could also be a [Peer DID] of types 2 or 4,
+example invitation above, the DID is a `did:peer` DID that is resolvable without
+requiring a public ledger. The DID could also be a [Peer DID] of types 2 or 4,
 which encode the entire DIDDoc contents into the DID identifier (thus they are
 "resolvable DIDs"). What cannot be used is either the old "unqualified" DIDs
 that were commonly used in Aries prior to 2024, and [Peer DID] type 1. Both of
@@ -87,7 +87,7 @@ Example invitation:
         "https://didcomm.org/didexchange/1.0"
     ],
     "services": [
-        "did:sov:4JiUsoK85pVkkB1bAPzFaP"
+        "did:peer:2.4JiUsoK85pVkkB1bAPzFaP4JiUsoK85pVkkB1bAPzFaP"
     ]
 }
 ```

@@ -45,7 +45,8 @@ class RepeatAttempt:
 
     def timeout(self, interval: Optional[float] = None):
         """Create a context manager for timing out an attempt."""
-        return asyncio.timeout(self.next_interval if interval is None else interval)
+        duration = self.next_interval if interval is None else interval
+        return _timeout_cm(duration)
 
     def __repr__(self) -> str:
         """Format as a string for debugging."""
@@ -88,3 +89,8 @@ class RepeatSequence:
             f"<{self.__class__.__name__} "
             f"limit={self.limit} interval={self.interval} backoff={self.backoff}>"
         )
+
+
+def _timeout_cm(duration: float):
+    """Async context manager that times out after duration (asyncio.timeout)."""
+    return asyncio.timeout(duration)

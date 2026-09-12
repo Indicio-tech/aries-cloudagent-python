@@ -15,7 +15,7 @@ Registry](https://ghcr.io).
 
 ## Image
 
-This project builds and publishes the `ghcr.io/openwallet-foundation/acapy` image.
+This project builds and publishes the `ghcr.io/openwallet-foundation/acapy-agent` image.
 Multiple variants are available; see [Tags](#tags).
 
 ### Tags
@@ -38,12 +38,42 @@ Standard image is outside of the scope of this document.
 The ACA-Py images built by this project are tagged to indicate which of the
 above variants it is. Other tags may also be generated for use by developers.
 
-Below is a table of all generated images and their tags:
+Click [here](https://github.com/openwallet-foundation/acapy/pkgs/container/acapy-agent/versions?filters%5Bversion_type%5D=tagged) to see a current list of the tagged images available for ACA-Py.
 
-Tag                     | Variant  | Example                  | Description                                                                                     |
-------------------------|----------|--------------------------|-------------------------------------------------------------------------------------------------|
-py3.9-X.Y.Z             | Standard | py3.9-0.7.4              | Standard image variant built on Python 3.9 for ACA-Py version X.Y.Z                             |
-py3.10-X.Y.Z            | Standard | py3.10-0.7.4             | Standard image variant built on Python 3.10 for ACA-Py version X.Y.Z                            |
+The following is the ACA-Py container images tagging format:
+
+**Regular Releases** (e.g., `1.7.0`):
+ - `py3.12-1.7.0` - Python version specific tag
+ - `1.7.0` - Semantic version tag
+ - `1.7` - Major.minor tag (moves to latest patch release)
+ - `latest` - Only assigned if this is the highest semantic version
+
+**Release Candidates** (e.g., `1.7.0rc0`):
+ - `py3.12-1.7.0rc0` - Python version specific RC tag
+ - `1.7.0rc0` - Semantic version RC tag
+ - **Note**: RC releases do NOT receive major.minor (`1.7`) or `latest` tags
+
+**Nightly Builds**:
+- `pyV.vv-nightly-YYYY-MM-DD` - Date-stamped nightly build
+- `pyV.vv-nightly` - Latest nightly build
+
+**LTS ([Long Term Support](../../LTS-Strategy.md)) Releases**:
+- `pyV.vv-X.Y-lts` - LTS tag (e.g., `py3.12-1.6-lts`)
+- This tag automatically moves to the latest patch release in the LTS line (e.g., from `1.6.0` to `1.6.1`)
+- LTS versions are managed via the `.github/lts-versions.txt` configuration file
+- See `.github/LTS-README.md` for details on configuring LTS versions
+
+**Tagging Behavior:**
+
+The `latest` tag is determined by comparing all release versions semantically. The workflow
+checks all non-RC releases and only applies the `latest` tag if the current release is the
+highest semantic version. This ensures:
+- Publishing `0.12.5` after `1.3.0` will NOT move `latest` to `0.12.5` (1.3.0 > 0.12.5)
+- Publishing `1.3.1` after `1.3.0` WILL move `latest` to `1.3.1` (1.3.1 > 1.3.0)
+- Release candidates never receive the `latest` tag
+
+The major.minor tags (e.g., `1.4`) automatically track the latest patch release, so publishing
+`1.4.1` will move the `1.4` tag from `1.4.0` to `1.4.1`.
 
 ### Image Comparison
 
@@ -57,23 +87,14 @@ variants and between the BC Gov ACA-Py images.
   - Uses container's system python environment rather than `pyenv`
   - Askar and Indy Shared libraries are installed as dependencies of ACA-Py through pip from pre-compiled binaries included in the python wrappers
   - Built from repo contents
-- Indy Image (no longer produced but included here for clarity)
+- Indy Image (no longer produced; legacy reference only)
   - Based on slim variant of Debian
-  - Built from multi-stage build step (`indy-base` in the Dockerfile) which includes Indy dependencies; this could be replaced with an explicit `indy-python` image from the Indy SDK repo
+  - Built from multi-stage build step (`indy-base` in the Dockerfile) which includes Indy dependencies
   - Includes `libindy` but does **NOT** include the Indy CLI
   - Default user is `indy`
   - Uses container's system python environment rather than `pyenv`
   - Askar and Indy Shared libraries are installed as dependencies of ACA-Py through pip from pre-compiled binaries included in the python wrappers
   - Built from repo contents
-  - Includes Indy postgres storage plugin
-- `bcgovimages/aries-cloudagent`
-  - (Usually) based on Ubuntu
-  - Based on `von-image`
-  - Default user is `indy`
-  - Includes `libindy` and Indy CLI
-  - Uses `pyenv`
-  - Askar and Indy Shared libraries built from source
-  - Built from ACA-Py python package uploaded to PyPI
   - Includes Indy postgres storage plugin
 
 ## Github Actions

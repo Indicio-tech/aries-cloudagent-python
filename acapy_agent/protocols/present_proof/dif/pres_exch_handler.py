@@ -16,7 +16,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 from dateutil import tz
 from dateutil.parser import ParserError
 from dateutil.parser import parse as dateutil_parser
-from jsonpath_ng import parse
+from jsonpath_ng.ext import parse
 from pyld import jsonld
 from pyld.jsonld import JsonLdProcessor
 from unflatten import unflatten
@@ -67,6 +67,9 @@ PRESENTATION_SUBMISSION_JSONLD_CONTEXT = (
 PRESENTATION_SUBMISSION_JSONLD_TYPE = "PresentationSubmission"
 PYTZ_TIMEZONE_PATTERN = re.compile(r"(([a-zA-Z]+)(?:\/)([a-zA-Z]+))")
 LIST_INDEX_PATTERN = re.compile(r"\[(\W+)\]|\[(\d+)\]")
+# jsonpath-ng 1.8+ uses parentheses in str(full_path); normalize to "a.b.c"
+JSONPATH_FULL_PATH_PARENS = re.compile(r"[()]")
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -207,7 +210,10 @@ class DIFPresExchHandler:
                 if not issuer_id:
                     for cred_subject_id in cred.subject_ids:
                         if not cred_subject_id.startswith("urn:"):
-                            did_info = await self._did_info_for_did(cred_subject_id)
+                            try:
+                                did_info = await self._did_info_for_did(cred_subject_id)
+                            except WalletError:
+                                continue
                             if did_info.key_type == reqd_key_type:
                                 issuer_id = cred_subject_id
                                 filtered_creds_list.append(cred.cred_value)
@@ -526,7 +532,9 @@ class DIFPresExchHandler:
                     if len(match) == 0:
                         continue
                     for match_item in match:
-                        full_path = str(match_item.full_path)
+                        full_path = JSONPATH_FULL_PATH_PARENS.sub(
+                            "", str(match_item.full_path)
+                        )
                         if bool(LIST_INDEX_PATTERN.search(full_path)):
                             full_path = re.sub(r"\[(\W+)\]|\[(\d+)\]", "[0]", full_path)
                             full_path = full_path.replace(".[", "[")
@@ -1028,6 +1036,7 @@ class DIFPresExchHandler:
             schema_id: schema uri to check
         Return:
             bool
+
         """
         if schema_id in credential.schema_ids:
             return True
@@ -1059,12 +1068,19 @@ class DIFPresExchHandler:
             records_filter: dict of input_descriptor ID key to list of credential_json
         Return:
             dict of input_descriptor ID key to list of credential_json
+
         """
         # Dict for storing descriptor_id keys and list of applicable
         # credentials values
         result = {}
         # Get all input_descriptors attached to the PresentationDefinition
         descriptor_list = req.input_descriptors or []
+        LOGGER.debug(
+            "DIF-PRES apply_requirements: descriptors=%s creds=%s records_filter=%s",
+            len(descriptor_list),
+            len(credentials),
+            list(records_filter.keys()) if records_filter else None,
+        )
         for descriptor in descriptor_list:
             # Filter credentials to apply filtering
             # upon by matching each credentialSchema.id
@@ -1087,6 +1103,13 @@ class DIFPresExchHandler:
             filtered = await self.filter_constraints(
                 constraints=descriptor.constraint,
                 credentials=filtered_by_schema,
+            )
+            LOGGER.debug(
+                "DIF-PRES apply_requirements: descriptor=%s schema_filtered=%s "
+                "constraints_filtered=%s",
+                descriptor.id,
+                len(filtered_by_schema),
+                len(filtered),
             )
             if len(filtered) != 0:
                 result[descriptor.id] = filtered
@@ -1176,6 +1199,7 @@ class DIFPresExchHandler:
             exclude: dict containing info about credentials to exclude
         Return:
             dict with input_descriptor.id as keys and merged_credentials_list as values
+
         """
         result = {}
         for res in nested_result:
@@ -1221,6 +1245,7 @@ class DIFPresExchHandler:
 
         Returns:
             Union[Sequence[dict], dict]: VerifiablePresentation.
+
         """
         document_loader = self.profile.inject(DocumentLoader)
         req = await self.make_requirement(
@@ -1262,39 +1287,36 @@ class DIFPresExchHandler:
             submission_property = PresentationSubmission(
                 id=str(uuid4()), definition_id=pd.id, descriptor_maps=descriptor_maps
             )
-            if self.is_holder or is_holder_override:
+            if self.pres_signing_did:
+                issuer_id = self.pres_signing_did
+                vp = await create_presentation(credentials=applicable_creds_list)
+            elif self.is_holder or is_holder_override:
                 (
                     issuer_id,
                     filtered_creds_list,
                 ) = await self.get_sign_key_credential_subject_id(
                     applicable_creds=applicable_creds
                 )
-                if not issuer_id and len(filtered_creds_list) == 0:
+                if not issuer_id:
+                    raise DIFPresExchError(
+                        "Unable to determine a local signing DID for the presentation"
+                    )
+                applicable_creds_list = filtered_creds_list
+                vp = await create_presentation(credentials=applicable_creds_list)
+            else:
+                (
+                    issuer_id,
+                    filtered_creds_list,
+                ) = await self.get_sign_key_credential_subject_id(
+                    applicable_creds=applicable_creds
+                )
+                if not issuer_id:
                     vp = await create_presentation(credentials=applicable_creds_list)
                     vp = self.__add_dif_fields_to_vp(vp, submission_property)
                     result_vp.append(vp)
                     continue
                 else:
                     applicable_creds_list = filtered_creds_list
-                    vp = await create_presentation(credentials=applicable_creds_list)
-            else:
-                if not self.pres_signing_did:
-                    (
-                        issuer_id,
-                        filtered_creds_list,
-                    ) = await self.get_sign_key_credential_subject_id(
-                        applicable_creds=applicable_creds
-                    )
-                    if not issuer_id:
-                        vp = await create_presentation(credentials=applicable_creds_list)
-                        vp = self.__add_dif_fields_to_vp(vp, submission_property)
-                        result_vp.append(vp)
-                        continue
-                    else:
-                        applicable_creds_list = filtered_creds_list
-                        vp = await create_presentation(credentials=applicable_creds_list)
-                else:
-                    issuer_id = self.pres_signing_did
                     vp = await create_presentation(credentials=applicable_creds_list)
             vp["presentation_submission"] = submission_property.serialize()
             if self.proof_type is BbsBlsSignature2020.signature_type:
@@ -1357,6 +1379,7 @@ class DIFPresExchHandler:
             and merged_credentials_list
         Return:
             Tuple of applicable credential list and descriptor map
+
         """
         dict_of_creds = {}
         dict_of_descriptors = {}
@@ -1392,24 +1415,38 @@ class DIFPresExchHandler:
         Args:
             pres: received VerifiablePresentation
             pd: PresentationDefinition
+
         """
         input_descriptors = pd.input_descriptors
+        requirement = await self.make_requirement(
+            srs=pd.submission_requirements,
+            descriptors=input_descriptors,
+        )
         if isinstance(pres, Sequence):
+            submitted_descriptors = set()
             for pr in pres:
                 descriptor_map_list = pr["presentation_submission"].get("descriptor_map")
-                await self.__verify_desc_map_list(
+                vp_descriptors = await self.__verify_desc_map_list(
                     descriptor_map_list, pr, input_descriptors
                 )
+                if submitted_descriptors & vp_descriptors:
+                    raise DIFPresExchError(
+                        "Descriptor IDs must be unique across presentations"
+                    )
+                submitted_descriptors.update(vp_descriptors)
+            self.__verify_submission_requirements(requirement, submitted_descriptors)
         else:
             descriptor_map_list = pres["presentation_submission"].get("descriptor_map")
-            await self.__verify_desc_map_list(
+            submitted_descriptors = await self.__verify_desc_map_list(
                 descriptor_map_list, pres, input_descriptors
             )
+            self.__verify_submission_requirements(requirement, submitted_descriptors)
 
     async def __verify_desc_map_list(self, descriptor_map_list, pres, input_descriptors):
         inp_desc_id_constraint_map = {}
         inp_desc_id_schema_one_of_filter = set()
         inp_desc_id_schemas_map = {}
+        submitted_descriptors = set()
         for input_descriptor in input_descriptors:
             inp_desc_id_constraint_map[input_descriptor.id] = input_descriptor.constraint
             inp_desc_id_schemas_map[input_descriptor.id] = input_descriptor.schemas
@@ -1417,6 +1454,11 @@ class DIFPresExchHandler:
                 inp_desc_id_schema_one_of_filter.add(input_descriptor.id)
         for desc_map_item in descriptor_map_list:
             desc_map_item_id = desc_map_item.get("id")
+            if desc_map_item_id not in inp_desc_id_constraint_map:
+                raise DIFPresExchError(
+                    f"Descriptor {desc_map_item_id} in descriptor_map is not "
+                    "defined by the presentation definition"
+                )
             constraint = inp_desc_id_constraint_map.get(desc_map_item_id)
             schema_filter = inp_desc_id_schemas_map.get(desc_map_item_id)
             desc_map_item_path = desc_map_item.get("path")
@@ -1452,6 +1494,37 @@ class DIFPresExchHandler:
                         f"Schema filtering specified in {desc_map_item_id} does not "
                         f"match with the enclosed credential in {desc_map_item_path}"
                     )
+            submitted_descriptors.add(desc_map_item_id)
+        return submitted_descriptors
+
+    def __verify_submission_requirements(
+        self, requirement: Requirement, submitted_descriptors: set
+    ) -> None:
+        """Verify that validated descriptor mappings satisfy the requirements."""
+        if not self.__is_requirement_satisfied(requirement, submitted_descriptors):
+            raise DIFPresExchError(
+                "Presentation does not satisfy the submission requirements"
+            )
+
+    def __count_satisfied_requirements(
+        self, requirement: Requirement, submitted_descriptors: set
+    ) -> int:
+        """Count descriptors or nested requirements satisfied by a presentation."""
+        if requirement.input_descriptors:
+            descriptor_ids = {
+                descriptor.id for descriptor in requirement.input_descriptors
+            }
+            return len(descriptor_ids & submitted_descriptors)
+        return sum(
+            self.__is_requirement_satisfied(nested_requirement, submitted_descriptors)
+            for nested_requirement in requirement.nested_req or []
+        )
+
+    def __is_requirement_satisfied(
+        self, requirement: Requirement, submitted_descriptors: set
+    ) -> bool:
+        count = self.__count_satisfied_requirements(requirement, submitted_descriptors)
+        return self.is_len_applicable(requirement, count)
 
     async def restrict_field_paths_one_of_filter(
         self, field_paths: Sequence[str], cred_dict: dict
@@ -1582,7 +1655,7 @@ class DIFPresExchHandler:
             to_check = path_split_array[-1]
             if "." not in to_check:
                 return path
-            split_by_index = re.split(r"\[(\d+)\]", to_check, 1)
+            split_by_index = re.split(r"\[(\d+)\]", to_check, maxsplit=1)
             if len(split_by_index) > 1:
                 jsonpath = parse(split_by_index[0])
                 match = jsonpath.find(cred_dict)

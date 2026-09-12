@@ -38,7 +38,7 @@ for developers, such as experimenting with the Traction/ACA-Py
 [Traction]: https://digital.gov.bc.ca/digital-trust/technical-resources/traction/
 [ACA-Py]: https://aca-py.org
 [Traction Sandbox]: https://traction-sandbox-tenant-ui.apps.silver.devops.gov.bc.ca/
-[BCovrin Test Ledger]: http://test.bcovrin.vonx.io/
+[BCovrin Test Ledger]: https://test.bcovrin.vonx.io/
 [Traction Sandbox Workshop FAQ and Questions]: https://github.com/bcgov/traction/issues/927
 
 Jump in!
@@ -50,7 +50,7 @@ Let’s start by getting your two agents — an Aries Mobile Wallet and an Aries
 ### Lab 1: Steps to Follow
 
 1. Get a compatible Aries Mobile Wallet to use with your Aries Traction tenant. There are a number to choose from.  We suggest that you use one of these:
-    1. [BC Wallet](https://digital.gov.bc.ca/digital-trust/about/about-bc-wallet) from the [Government of British Columbia](https://digital.gov.bc.ca/digital-trust/)
+    1. [BC Wallet](https://digital.gov.bc.ca/design/digital-trust/digital-credentials/bc-wallet/) from the [Government of British Columbia](https://digital.gov.bc.ca/design/digital-trust/)
     2. [Orbit Wallet](https://northernblock.io/orbit-edge-wallet/) from [Northern Block](https://northernblock.io/)
 2. Click this [Traction Sandbox] link to go to the Sandbox login page to create your own Traction Tenant Aries agent. Once there, do the following:
     1. Click "Create Request!", fill in at least the required form fields, and click "Submit".
@@ -106,7 +106,7 @@ BCovrin (pronounced “Be Sovereign”) Test network. For those new to AnonCreds
     2. Click “Add Schema From Ledger” and fill in the `Schema Id` with the value `H7W22uhD4ueQdGaGeiCgaM:2:student id:1.0.0`.
         1. By doing this, you (as the issuer) will be using a previously
         published schema. [Click
-        here](http://test.bcovrin.vonx.io/browse/domain?page=1&query=H7W22uhD4ueQdGaGeiCgaM&txn_type=101)
+        here](https://test.bcovrin.vonx.io/browse/domain?page=1&query=H7W22uhD4ueQdGaGeiCgaM&txn_type=101)
         to see the schema on the ledger.
     3. To see the details about your schema, hit the Expand (`>`) link, and then
        the subsequent `>` to “View Raw Content."

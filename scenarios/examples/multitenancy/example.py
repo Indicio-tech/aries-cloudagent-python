@@ -14,10 +14,10 @@ from acapy_controller.protocols import (
     didexchange,
     indy_anoncred_credential_artifacts,
     indy_issue_credential_v2,
-    indy_present_proof_v2,
     params,
 )
 from aiohttp import ClientSession
+from examples.util import indy_present_proof_v2
 
 AGENCY = getenv("AGENCY", "http://agency:3001")
 
@@ -97,7 +97,7 @@ async def main():
             {"firstname": "Bob", "lastname": "Builder"},
         )
 
-        # Present the the credential's attributes
+        # Present the credential's attributes
         await indy_present_proof_v2(
             bob,
             alice,

@@ -10,12 +10,17 @@ from .......resolver.did_resolver import DIDResolver
 from .......storage.vc_holder.base import VCHolder
 from .......storage.vc_holder.vc_record import VCRecord
 from .......tests import mock
-from .......utils.testing import create_test_profile
+from .......utils.testing import create_test_profile, skip_on_jsonld_url_error
 from .......vc.ld_proofs import DocumentLoader
+from .......vc.ld_proofs.validation_result import (
+    DocumentVerificationResult,
+    ProofResult,
+    PurposeResult,
+)
 from .......vc.vc_di.manager import VcDiManager
 from .......vc.vc_ld.manager import VcLdpManager
 from .......vc.vc_ld.validation_result import PresentationVerificationResult
-from .....dif.pres_exch import SchemaInputDescriptor
+from .....dif.pres_exch import PresentationDefinition, SchemaInputDescriptor
 from .....dif.pres_exch_handler import DIFPresExchError, DIFPresExchHandler
 from .....dif.tests.test_data import (
     EXPANDED_CRED_FHIR_TYPE_1,
@@ -570,17 +575,27 @@ class TestDIFFormatHandler(IsolatedAsyncioTestCase):
             error_msg="error",
         )
 
-        with mock.patch.object(
-            DIFPresExchHandler,
-            "create_vp",
-            mock.CoroutineMock(),
-        ) as mock_create_vp:
+        with (
+            mock.patch.object(
+                DIFPresExchHandler,
+                "__init__",
+                return_value=None,
+            ) as mock_handler_init,
+            mock.patch.object(
+                DIFPresExchHandler,
+                "create_vp",
+                mock.CoroutineMock(),
+            ) as mock_create_vp,
+        ):
             mock_create_vp.return_value = DIF_PRES
-            output = await self.handler.create_pres(record, {})
+            output = await self.handler.create_pres(
+                record, {"dif": {"issuer_id": TEST_DID_KEY}}
+            )
             assert isinstance(output[0], V20PresFormat) and isinstance(
                 output[1], AttachDecorator
             )
             assert output[1].data.json_ == DIF_PRES
+            assert mock_handler_init.call_args.kwargs["pres_signing_did"] == TEST_DID_KEY
 
     async def test_create_pres_pd_schema_uri(self):
         dif_pres_req = deepcopy(DIF_PRES_REQUEST_B)
@@ -1704,6 +1719,44 @@ class TestDIFFormatHandler(IsolatedAsyncioTestCase):
         await self.handler.receive_pres(message=dif_pres, pres_ex_record=record)
 
     async def test_verify_received_pres_sequence(self):
+        presentation_definition = PresentationDefinition.deserialize(
+            DIF_PRES_REQUEST_SEQUENCE["presentation_definition"]
+        )
+        dif_handler = DIFPresExchHandler(self.profile)
+        await dif_handler.verify_received_pres(
+            pd=presentation_definition,
+            pres=DIF_PRES_SEQUENCE,
+        )
+
+    async def test_verify_received_pres_rejects_partial_sequence(self):
+        presentation_definition = PresentationDefinition.deserialize(
+            DIF_PRES_REQUEST_SEQUENCE["presentation_definition"]
+        )
+        dif_handler = DIFPresExchHandler(self.profile)
+
+        with self.assertRaises(DIFPresExchError):
+            await dif_handler.verify_received_pres(
+                pd=presentation_definition,
+                pres=[DIF_PRES_SEQUENCE[0]],
+            )
+
+    async def test_verify_received_pres_rejects_duplicate_descriptor_ids(self):
+        presentation_definition = PresentationDefinition.deserialize(
+            DIF_PRES_REQUEST_SEQUENCE["presentation_definition"]
+        )
+        duplicate_sequence = deepcopy(DIF_PRES_SEQUENCE)
+        duplicate_sequence[1]["presentation_submission"]["descriptor_map"][0]["id"] = (
+            "citizenship_input_1"
+        )
+        dif_handler = DIFPresExchHandler(self.profile)
+
+        with self.assertRaises(DIFPresExchError):
+            await dif_handler.verify_received_pres(
+                pd=presentation_definition,
+                pres=duplicate_sequence,
+            )
+
+    async def test_receive_pres_sequence(self):
         dif_pres = V20Pres(
             formats=[
                 V20PresFormat(
@@ -1745,6 +1798,32 @@ class TestDIFFormatHandler(IsolatedAsyncioTestCase):
             error_msg="error",
         )
         await self.handler.receive_pres(message=dif_pres, pres_ex_record=record)
+
+    async def test_verify_received_pres_rejects_omitted_descriptor(self):
+        proof_request = deepcopy(DIF_PRES_REQUEST_SEQUENCE)
+        proof_request["presentation_definition"].pop("submission_requirements")
+        presentation_definition = PresentationDefinition.deserialize(
+            proof_request["presentation_definition"]
+        )
+        dif_handler = DIFPresExchHandler(self.profile)
+
+        with self.assertRaises(DIFPresExchError):
+            await dif_handler.verify_received_pres(
+                pd=presentation_definition,
+                pres=DIF_PRES,
+            )
+
+    async def test_verify_received_pres_rejects_unmet_submission_requirements(self):
+        presentation_definition = PresentationDefinition.deserialize(
+            DIF_PRES_REQUEST_SEQUENCE["presentation_definition"]
+        )
+        dif_handler = DIFPresExchHandler(self.profile)
+
+        with self.assertRaises(DIFPresExchError):
+            await dif_handler.verify_received_pres(
+                pd=presentation_definition,
+                pres=DIF_PRES,
+            )
 
     async def test_verify_received_limit_disclosure_a(self):
         dif_proof = deepcopy(DIF_PRES)
@@ -2025,6 +2104,7 @@ class TestDIFFormatHandler(IsolatedAsyncioTestCase):
             await self.handler.receive_pres(message=dif_pres, pres_ex_record=record)
             mock_log_err.assert_called_once()
 
+    @skip_on_jsonld_url_error
     async def test_verify_received_pres_no_match_b(self):
         dif_proof_req = deepcopy(DIF_PRES_REQUEST_B)
         dif_proof_req["presentation_definition"]["input_descriptors"][0]["constraints"][
@@ -2128,6 +2208,7 @@ class TestDIFFormatHandler(IsolatedAsyncioTestCase):
             await self.handler.receive_pres(message=dif_pres, pres_ex_record=record)
             mock_log_err.assert_called_once()
 
+    @skip_on_jsonld_url_error
     async def test_verify_received_pres_limit_disclosure_fail_b(self):
         dif_proof = deepcopy(DIF_PRES)
         dif_proof["verifiableCredential"][0]["credentialSubject"]["test"] = "Test"
@@ -2377,3 +2458,27 @@ class TestDIFFormatHandler(IsolatedAsyncioTestCase):
         manager, options = handler._get_type_manager_options(dif_proof, pres_request)
         assert isinstance(manager, VcLdpManager)
         assert options.challenge == "3fa85f64-5717-4562-b3fc-2c963f66afa7"
+
+    async def test_summarize_doc_result_redacts_sensitive_fields(self):
+        self.profile = await create_test_profile()
+        handler = DIFPresFormatHandler(self.profile)
+        doc_result = DocumentVerificationResult(
+            verified=False,
+            document={"id": "doc", "proof": {"proofValue": "secret"}},
+            results=[
+                ProofResult(
+                    verified=False,
+                    proof={"proofValue": "secret"},
+                    error="bad proof",
+                    purpose_result=PurposeResult(valid=False, error="purpose failed"),
+                )
+            ],
+            errors=["verification failed"],
+        )
+        summary = handler._summarize_doc_result(doc_result)
+        assert summary["verified"] is False
+        assert summary["errors"] == ["verification failed"]
+        assert "document" not in summary
+        assert "proof" not in summary["proof_results"][0]
+        assert summary["proof_results"][0]["error"] == "bad proof"
+        assert summary["proof_results"][0]["purpose_error"] == "purpose failed"

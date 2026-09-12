@@ -69,7 +69,7 @@ class AskarProfile(Profile):
     def init_ledger_pool(self):
         """Initialize the ledger pool."""
         if self.settings.get("ledger.disabled"):
-            LOGGER.info("Ledger support is disabled")
+            LOGGER.debug("init_ledger_pool: Ledger support is disabled")
             return
         if self.settings.get("ledger.genesis_transactions"):
             pool_name = self.settings.get("ledger.pool_name", "default")
@@ -219,11 +219,11 @@ class AskarProfileSession(ProfileSession):
     ):
         """Create a new IndySdkProfileSession instance."""
         super().__init__(profile=profile, context=context, settings=settings)
-        if is_txn:
-            self._opener = self.profile.store.transaction(profile.profile_id)
-        else:
-            self._opener = self.profile.store.session(profile.profile_id)
         self._profile = profile
+        if is_txn:
+            self._opener = self._profile.store.transaction(profile.profile_id)
+        else:
+            self._opener = self._profile.store.session(profile.profile_id)
         self._handle: Optional[Session] = None
         self._acquire_start: Optional[float] = None
         self._acquire_end: Optional[float] = None

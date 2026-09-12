@@ -21,9 +21,9 @@ class TransactionRequestHandler(BaseHandler):
         Args:
             context: Request context
             responder: Responder callback
-        """
 
-        self._logger.debug(f"TransactionRequestHandler called with context {context}")
+        """
+        self._logger.debug("TransactionRequestHandler called with context %s", context)
         assert isinstance(context.message, TransactionRequest)
 
         if not context.connection_ready:

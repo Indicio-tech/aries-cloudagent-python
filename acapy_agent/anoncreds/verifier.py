@@ -52,6 +52,7 @@ class AnonCredsVerifier:
             pres_req: presentation request
             pres: corresponding presentation
             cred_defs: credential definitions by cred def id
+
         """
         msgs = []
         for req_proof_key, pres_key in {
@@ -119,6 +120,7 @@ class AnonCredsVerifier:
             pres_req: anoncreds proof request
             pres: anoncreds proof request
             rev_reg_defs: rev reg defs by rev reg id, augmented with transaction times
+
         """
         msgs = []
         now = int(time())
@@ -199,9 +201,11 @@ class AnonCredsVerifier:
                                 f"{uuid}"
                             )
                             LOGGER.info(
-                                f"Timestamp {timestamp} from ledger for item"
-                                f"{uuid} falls outside non-revocation interval "
-                                f"{non_revoc_intervals[uuid]}"
+                                "Timestamp %s from ledger for item %s falls outside "
+                                "non-revocation interval %s",
+                                timestamp,
+                                uuid,
+                                non_revoc_intervals[uuid],
                             )
                 elif uuid in unrevealed_attrs:
                     # nothing to do, attribute value is not revealed
@@ -236,10 +240,12 @@ class AnonCredsVerifier:
                         msgs.append(
                             f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::{uuid}"
                         )
-                        LOGGER.warning(
-                            f"Timestamp {timestamp} from ledger for item"
-                            f"{uuid} falls outside non-revocation interval "
-                            f"{non_revoc_intervals[uuid]}"
+                        LOGGER.info(
+                            "Timestamp %s from ledger for item %s falls outside "
+                            "non-revocation interval %s",
+                            timestamp,
+                            uuid,
+                            non_revoc_intervals[uuid],
                         )
 
         for uuid, req_pred in pres_req["requested_predicates"].items():
@@ -445,8 +451,8 @@ class AnonCredsVerifier:
             rev_reg_defs: revocation registry definitions
             rev_reg_entries: revocation registry entries
             rev_lists: revocation lists
-        """
 
+        """
         msgs = []
         try:
             msgs += self.non_revoc_intervals(pres_req, pres, credential_definitions)

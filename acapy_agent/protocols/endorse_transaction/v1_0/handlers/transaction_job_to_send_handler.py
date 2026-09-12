@@ -19,9 +19,9 @@ class TransactionJobToSendHandler(BaseHandler):
         Args:
             context: Request context
             responder: Responder callback
-        """
 
-        self._logger.debug(f"TransactionJobToSendHandler called with context {context}")
+        """
+        self._logger.debug("TransactionJobToSendHandler called with context %s", context)
         assert isinstance(context.message, TransactionJobToSend)
 
         if not context.connection_ready:

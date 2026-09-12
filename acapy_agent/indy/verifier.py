@@ -120,6 +120,7 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
             pres_req: indy proof request
             pres: indy proof request
             rev_reg_defs: rev reg defs by rev reg id, augmented with transaction times
+
         """
         msgs = []
         now = int(time())
@@ -205,9 +206,11 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                                 f"{uuid}"
                             )
                             LOGGER.info(
-                                f"Timestamp {timestamp} from ledger for item"
-                                f"{uuid} falls outside non-revocation interval "
-                                f"{non_revoc_intervals[uuid]}"
+                                "Timestamp %s from ledger for item %s falls outside "
+                                "non-revocation interval %s",
+                                timestamp,
+                                uuid,
+                                non_revoc_intervals[uuid],
                             )
                 elif uuid in unrevealed_attrs:
                     # nothing to do, attribute value is not revealed
@@ -242,10 +245,12 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                         msgs.append(
                             f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::{uuid}"
                         )
-                        LOGGER.warning(
-                            f"Timestamp {timestamp} from ledger for item"
-                            f"{uuid} falls outside non-revocation interval "
-                            f"{non_revoc_intervals[uuid]}"
+                        LOGGER.info(
+                            "Timestamp %s from ledger for item %s falls outside "
+                            "non-revocation interval %s",
+                            timestamp,
+                            uuid,
+                            non_revoc_intervals[uuid],
                         )
 
         for uuid, req_pred in pres_req["requested_predicates"].items():
@@ -392,4 +397,5 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
             credential_definitions: credential definition data
             rev_reg_defs: revocation registry definitions
             rev_reg_entries: revocation registry entries
+
         """

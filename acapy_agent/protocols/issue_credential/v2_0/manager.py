@@ -34,6 +34,7 @@ class V20CredManager:
 
         Args:
             profile: The profile instance for this credential manager
+
         """
         self._profile = profile
 
@@ -53,6 +54,7 @@ class V20CredManager:
         cred_proposal: V20CredProposal,
         verification_method: Optional[str] = None,
         auto_remove: Optional[bool] = None,
+        auto_remove_on_failure: Optional[bool] = None,
         replacement_id: Optional[str] = None,
     ) -> Tuple[V20CredExRecord, V20CredOffer]:
         """Set up a new credential exchange record for an automated send.
@@ -62,6 +64,7 @@ class V20CredManager:
             cred_proposal: credential proposal with preview
             verification_method: an optional verification method to be used when issuing
             auto_remove: flag to remove the record automatically on completion
+            auto_remove_on_failure: flag to remove the record automatically on failure
             replacement_id: identifier to help coordinate credential replacement
 
         Returns:
@@ -70,6 +73,10 @@ class V20CredManager:
         """
         if auto_remove is None:
             auto_remove = not self._profile.settings.get("preserve_exchange_records")
+        if auto_remove_on_failure is None:
+            auto_remove_on_failure = bool(
+                self._profile.settings.get("no_preserve_failed_exchange_records")
+            )
         cred_ex_record = V20CredExRecord(
             connection_id=connection_id,
             verification_method=verification_method,
@@ -78,6 +85,7 @@ class V20CredManager:
             cred_proposal=cred_proposal,
             auto_issue=True,
             auto_remove=auto_remove,
+            auto_remove_on_failure=auto_remove_on_failure,
             trace=(cred_proposal._trace is not None),
         )
         return await self.create_offer(
@@ -111,7 +119,6 @@ class V20CredManager:
             Resulting credential exchange record including credential proposal
 
         """
-
         if auto_remove is None:
             auto_remove = not self._profile.settings.get("preserve_exchange_records")
         cred_ex_record = V20CredExRecord(
@@ -222,7 +229,6 @@ class V20CredManager:
                 supported formats.
 
         """
-
         cred_proposal_message = (
             counter_proposal if counter_proposal else cred_ex_record.cred_proposal
         )
@@ -287,7 +293,6 @@ class V20CredManager:
             The credential exchange record, updated
 
         """
-
         # Get credential exchange record (holder sent proposal first)
         # or create it (issuer sent offer first)
         try:
@@ -431,7 +436,11 @@ class V20CredManager:
         # connection_id is None in the record if this is in response to
         # an request~attach from an OOB message. If so, we do not want to filter
         # the record by connection_id.
-        connection_id = None if oob_record else connection_record.connection_id
+        connection_id = (
+            None
+            if oob_record
+            else (connection_record.connection_id if connection_record else None)
+        )
 
         handlers = [
             f.handler(self.profile)
@@ -444,12 +453,34 @@ class V20CredManager:
 
         async with self._profile.session() as session:
             try:
-                cred_ex_record = await V20CredExRecord.retrieve_by_conn_and_thread(
-                    session,
-                    connection_id,
-                    cred_request_message._thread_id,
-                    role=V20CredExRecord.ROLE_ISSUER,
-                )
+                try:
+                    cred_ex_record = await V20CredExRecord.retrieve_by_conn_and_thread(
+                        session,
+                        connection_id,
+                        cred_request_message._thread_id,
+                        role=V20CredExRecord.ROLE_ISSUER,
+                    )
+                except StorageNotFoundError:
+                    if not connection_id:
+                        raise
+                    # The issuer's exchange record may have been created without a
+                    # connection (offer attached to an OOB invitation) while the
+                    # request arrives over the connection established by that same
+                    # invitation (e.g. after the OobRecord has been cleaned up, as
+                    # in a self-connection). Retry matching on thread and role only,
+                    # but never adopt a record already bound to another connection.
+                    cred_ex_record = await V20CredExRecord.retrieve_by_conn_and_thread(
+                        session,
+                        None,
+                        cred_request_message._thread_id,
+                        role=V20CredExRecord.ROLE_ISSUER,
+                    )
+                    if cred_ex_record.connection_id:
+                        raise StorageNotFoundError(
+                            "Credential exchange record for thread "
+                            f"{cred_request_message._thread_id} belongs to another "
+                            "connection"
+                        )
             except StorageNotFoundError as ex:
                 # holder sent this request free of any offer
                 if handlers_without_offer:
@@ -500,7 +531,6 @@ class V20CredManager:
             Tuple: (Updated credential exchange record, credential issue message)
 
         """
-
         if cred_ex_record.state != V20CredExRecord.STATE_REQUEST_RECEIVED:
             raise V20CredManagerError(
                 f"Credential exchange {cred_ex_record.cred_ex_id} "
@@ -733,7 +763,6 @@ class V20CredManager:
 
     async def delete_cred_ex_record(self, cred_ex_id: str) -> None:
         """Delete credential exchange record and associated detail records."""
-
         async with self._profile.session() as session:
             for fmt in V20CredFormat.Format:  # details first: do not strand any orphans
                 for record in await fmt.detail.query_by_cred_ex_id(
@@ -769,5 +798,8 @@ class V20CredManager:
             )
             cred_ex_record.error_msg = f"{code}: {message.description.get('en', code)}"
             await cred_ex_record.save(session, reason="received problem report")
+
+        if cred_ex_record.auto_remove_on_failure:
+            await self.delete_cred_ex_record(cred_ex_record.cred_ex_id)
 
         return cred_ex_record

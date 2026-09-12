@@ -44,7 +44,7 @@ To open ACA-Py in a devcontainer, we open the *root* of this repository. We can 
 
 #### devcontainer.json
 
-When the [.devcontainer/devcontainer.json](https://github.com/openwallet-foundation/acapy/blob/main/.devcontainer/devcontainer.json) is opened, you will see it building... it is building a Python 3.12 image (bash shell) and loading it with all the ACA-Py requirements. We also load a few Visual Studio settings (for running Pytests and formatting with Ruff).
+When the [.devcontainer/devcontainer.json](https://github.com/openwallet-foundation/acapy/blob/main/.devcontainer/devcontainer.json) is opened, you will see it building... it is building a Python 3.13 image (bash shell) and loading it with all the ACA-Py requirements. We also load a few Visual Studio settings (for running Pytests and formatting with Ruff).
 
 ### Poetry
 
@@ -140,36 +140,36 @@ For all the agents if you don't want to support revocation you need to remove or
 
 ### Faber
 
-- admin api url = http://localhost:9041
+- admin api url = `http://localhost:9041`
 - study the demo to understand the steps to have the agent in the correct state. Make your public dids and schemas, cred-defs, etc.
 
 ### Alice
 
-- admin api url = http://localhost:9011
+- admin api url = `http://localhost:9011`
 - study the demo to get a connection with faber
 
 ### Endorser
 
-- admin api url = http://localhost:9031
+- admin api url = `http://localhost:9031`
 - This config is useful if you want to develop in an environment that requires endorsement. You can run the demo with `./run_demo faber --endorser-role author` to see all the steps to become and endorser.
 
 ### Author
 
-- admin api url = http://localhost:9021
+- admin api url = `http://localhost:9021`
 - This config is useful if you want to develop in an environment that requires endorsement. You can run the demo with `./run_demo faber --endorser-role author` to see all the steps to become and author. You need to uncomment the configurations for automating the connection to endorser.
 
 ### Multitenant-Admin
 
-- admin api url = http://localhost:9051
+- admin api url = `http://localhost:9051`
 - This is for a multitenant environment where you can create multiple tenants with subwallets with one agent. See [Multitenancy](./Multitenancy.md)
 
 ### Try running Faber and Alice at the same time and add break points and recreate the demo
 
 To run your ACA-Py code in debug mode, go to the `Run and Debug` view, select the agent(s) you want to start and click `Start Debugging (F5)`.
 
-This will start your source code as a running ACA-Py instance, all configuration is in the `*.yml` files. This is just a sample of a configuration. Note that we are not using a database and are joining to a local VON Network (by default, it would be `http://localhost:9000`). You could change this or another ledger such as `http://test.bcovrin.vonx.io`. These are purposefully, very simple configurations.
+This will start your source code as a running ACA-Py instance, all configuration is in the `*.yml` files. This is just a sample of a configuration. Note that we are not using a database and are joining to a local VON Network (by default, it would be `http://localhost:9000`). You could change this or another ledger such as `https://test.bcovrin.vonx.io`. These are purposefully, very simple configurations.
 
-For example, open `acapy_agent/admin/server.py` and set a breakpoint in `async def status_handler(self, request: web.BaseRequest):`, then call [`GET /status`](http://localhost:9061/api/doc#/server/get_status) in the Admin Console and hit your breakpoint.
+For example, open `acapy_agent/admin/server.py` and set a breakpoint in `async def status_handler(self, request: web.BaseRequest):`, then call `GET /status` at `http://localhost:9061/api/doc#/server/get_status` in the Admin Console and hit your breakpoint.
 
 ## Pytest
 

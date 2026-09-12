@@ -19,10 +19,10 @@ class RefusedTransactionResponseHandler(BaseHandler):
         Args:
             context: Request context
             responder: Responder callback
-        """
 
+        """
         self._logger.debug(
-            f"RefusedTransactionResponseHandler called with context {context}"
+            "RefusedTransactionResponseHandler called with context %s", context
         )
         assert isinstance(context.message, RefusedTransactionResponse)
 

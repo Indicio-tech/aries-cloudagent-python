@@ -1,19 +1,25 @@
+import json
 from typing import Tuple
 from unittest import IsolatedAsyncioTestCase
 
+import base58
 import pytest
+from aries_askar import Key, KeyAlg
+
+from acapy_agent.resolver.default.key import KeyDIDResolver
 
 from ...resolver.did_resolver import DIDResolver
 from ...resolver.tests.test_did_resolver import MockResolver
 from ...utils.testing import create_test_profile
 from ...wallet.did_method import KEY, DIDMethods
 from ...wallet.key_type import ED25519, P256, KeyType, KeyTypes
+from ...wallet.keys.manager import MultikeyManager, multikey_to_verkey
 from ..base import BaseWallet
 from ..default_verification_key_strategy import (
     BaseVerificationKeyStrategy,
     DefaultVerificationKeyStrategy,
 )
-from ..jwt import jwt_sign, jwt_verify, resolve_public_key_by_kid_for_verify
+from ..jwt import jwt_sign, jwt_verify
 
 
 class TestJWT(IsolatedAsyncioTestCase):
@@ -92,6 +98,9 @@ class TestJWT(IsolatedAsyncioTestCase):
             BaseVerificationKeyStrategy, DefaultVerificationKeyStrategy()
         )
         self.profile.context.injector.bind_instance(KeyTypes, KeyTypes())
+        self.profile.context.injector.bind_instance(
+            DIDResolver, DIDResolver([KeyDIDResolver()])
+        )
 
     async def setUpTestingDid(self, key_type: KeyType) -> Tuple[str, str]:
         async with self.profile.session() as session:
@@ -164,7 +173,7 @@ class TestJWT(IsolatedAsyncioTestCase):
         verification_method = "did:key:zzzzgg342Ycpuk263R9d8Aq6MUaxPn1DDeHyGo38EefXmgDL#z6Mkgg342Ycpuk263R9d8Aq6MUaxPn1DDeHyGo38EefXmgDL"
         with pytest.raises(Exception) as e_info:
             await jwt_sign(self.profile, headers, payload, did, verification_method)
-        assert "Unknown DID" in str(e_info)
+        assert "DIDNotFound" in str(e_info)
 
     async def test_verify_x_invalid_signed(self):
         for key_type in [ED25519, P256]:
@@ -183,20 +192,56 @@ class TestJWT(IsolatedAsyncioTestCase):
             with pytest.raises(Exception):
                 await jwt_verify(self.profile, signed)
 
-    async def test_resolve_public_key_by_kid_for_verify_ed25519(self):
-        (_, kid) = await self.setUpTestingDid(ED25519)
-        (key_bs58, key_type) = await resolve_public_key_by_kid_for_verify(
-            self.profile, kid
-        )
+    async def test_sign_and_verify_with_json_web_key_verification_method(self):
+        """JWT verify must accept JsonWebKey2020 publicKeyJwk VMs (e.g. #key-01-jwk)."""
+        for alg, key_alg in [
+            ("ed25519", KeyAlg.ED25519),
+            ("p256", KeyAlg.P256),
+        ]:
+            with self.subTest(alg=alg):
+                vm_id = f"did:web:example.com#key-01-{alg}-jwk"
+                async with self.profile.session() as session:
+                    created = await MultikeyManager(session=session).create(
+                        seed=self.seed, alg=alg
+                    )
+                    multikey = created["multikey"]
+                    await MultikeyManager(session=session).update(multikey, vm_id)
 
-        assert key_bs58 == "3Dn1SJNPaCXcvvJvSbsFWP2xaCjMom3can8CQNhWrTRx"
-        assert key_type == ED25519
+                askar_key = Key.from_public_bytes(
+                    key_alg, base58.b58decode(multikey_to_verkey(multikey))
+                )
+                jwk = json.loads(askar_key.get_jwk_public())
+                did_doc = {
+                    "@context": [
+                        "https://www.w3.org/ns/did/v1",
+                        "https://w3id.org/security/suites/jws-2020/v1",
+                    ],
+                    "id": "did:web:example.com",
+                    "verificationMethod": [
+                        {
+                            "id": vm_id,
+                            "type": "JsonWebKey2020",
+                            "controller": "did:web:example.com",
+                            "publicKeyJwk": jwk,
+                        }
+                    ],
+                    "assertionMethod": [vm_id],
+                    "authentication": [vm_id],
+                }
+                resolver = DIDResolver()
+                resolver.register_resolver(
+                    MockResolver(
+                        ["web"],
+                        resolved=did_doc,
+                        native=True,
+                    )
+                )
+                self.profile.context.injector.bind_instance(DIDResolver, resolver)
 
-    async def test_resolve_public_key_by_kid_for_verify_p256(self):
-        (_, kid) = await self.setUpTestingDid(P256)
-        (key_bs58, key_type) = await resolve_public_key_by_kid_for_verify(
-            self.profile, kid
-        )
-
-        assert key_bs58 == "tYbR5egjfja9D5ix1jjYGqfh5QPu73RcZ7UjQUXtargj"
-        assert key_type == P256
+                signed = await jwt_sign(
+                    self.profile, {}, {"hello": "world", "alg": alg}, None, vm_id
+                )
+                result = await jwt_verify(self.profile, signed)
+                assert result.valid
+                assert result.kid == vm_id
+                assert result.payload == {"hello": "world", "alg": alg}
